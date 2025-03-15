@@ -11,24 +11,24 @@ We propose a registry accessible on both the client and server that uses the WP 
 ## Feature Structure
 
 ```ts
-type FeatureLocationTuple = ["client"] | ["server"] | ["client", "server"];
+type FeatureLocationTuple = ['client'] | ['server'] | ['client', 'server'];
 
 type WP_Feature = {
-  id: string; // Namespaced ID
-  name: string; // Human readable name, used for AI context and UI labels
-  description: string; // Description of the feature, used for AI context
-  type: "resource" | "tool"; // Type of feature
-  meta?: any; // Additional metadata
-  categories?: string[]; // Categories of the feature, used for grouping and filtering
-  input_schema?: any; // Schema for the feature input
-  output_schema?: any; // Schema for the feature output, useful for structured outputs
-  callback?: (context: any) => {}; // Callback for the feature
-  permissions?:
-    | string
-    | string[]
-    | ((user: WP_User, feature: WP_Feature) => boolean); // Permissions required to use the feature
-  filter?: (feature: WP_Feature) => boolean; // Filter to determine if the feature is available
-  _location: FeatureLocationTuple; // Location of the feature: [client], [server] or [client, server]
+	id: string; // Namespaced ID
+	name: string; // Human readable name, used for AI context and UI labels
+	description: string; // Description of the feature, used for AI context
+	type: 'resource' | 'tool'; // Type of feature
+	meta?: any; // Additional metadata
+	categories?: string[]; // Categories of the feature, used for grouping and filtering
+	input_schema?: any; // Schema for the feature input
+	output_schema?: any; // Schema for the feature output, useful for structured outputs
+	callback?: (context: any) => {}; // Callback for the feature
+	permissions?:
+		| string
+		| string[]
+		| ((user: WP_User, feature: WP_Feature) => boolean); // Permissions required to use the feature
+	filter?: (feature: WP_Feature) => boolean; // Filter to determine if the feature is available
+	_location: FeatureLocationTuple; // Location of the feature: [client], [server] or [client, server]
 };
 ```
 
@@ -206,7 +206,7 @@ This provides more availability to scope features too:
 
 ```tsx
 const wooFeatures = wp.features.get({
-  group: "woocommerce",
+	group: 'woocommerce',
 });
 ```
 
@@ -258,15 +258,15 @@ Use and handle versioning:
 
 ```tsx
 // Request specific version
-const feature = wp.features.find("woocommerce/product/report", {
-  version: "1.0.0", // Falls back to latest if not found
+const feature = wp.features.find('woocommerce/product/report', {
+	version: '1.0.0', // Falls back to latest if not found
 });
 
 // Check if feature is deprecated
 if (feature.isDeprecated()) {
-  console.warn(
-    `Feature ${feature.id} is deprecated. ${feature.deprecated_message}`
-  );
+	console.warn(
+		`Feature ${feature.id} is deprecated. ${feature.deprecated_message}`
+	);
 }
 
 // Get suggested alternatives

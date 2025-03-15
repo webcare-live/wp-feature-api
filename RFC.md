@@ -42,32 +42,32 @@ Let's walk through some common use cases to address how we can use Features API 
 Imagine an AI model operating in WordPress:
 
 ```tsx
-import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
 
-const userMessage = "I want to update my post";
+const userMessage = 'I want to update my post';
 
 const { text } = await generateText({
-  model: openai("gpt-4o"),
-  system: "You are a friendly WordPress assistant!",
-  prompt: userMessage,
+	model: openai('gpt-4o'),
+	system: 'You are a friendly WordPress assistant!',
+	prompt: userMessage,
 });
 ```
 
 How do we make this model aware of all the features of WordPress and have it use them?
 
 ```tsx
-import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
 
 // register features globally
-wp.features.register("editor/go_to_post", {
-  type: "tool", // or resource, borrowed from MCP
-  description: "Navigates to a post when in the WordPress editor.",
-  input_schema: z.object({ postId: z.string() }),
-  callback: async (input) => {
-    document.location.href = `post.php?post=${input.postId}&action=edit`;
-  },
+wp.features.register('editor/go_to_post', {
+	type: 'tool', // or resource, borrowed from MCP
+	description: 'Navigates to a post when in the WordPress editor.',
+	input_schema: z.object({ postId: z.string() }),
+	callback: async (input) => {
+		document.location.href = `post.php?post=${input.postId}&action=edit`;
+	},
 });
 
 // gets all features from the registry
@@ -75,22 +75,22 @@ const features = wp.features.get();
 
 // Reformat our features as tools for the LLM
 const toolsFromFeatures = function (features) {
-  return features.map(({ id, name, description, input_schema }) => ({
-    id,
-    name,
-    description,
-    parameters: input_schema,
-    execute: async (input) => {
-      return await wp.features.run(id, input);
-    },
-  }));
+	return features.map(({ id, name, description, input_schema }) => ({
+		id,
+		name,
+		description,
+		parameters: input_schema,
+		execute: async (input) => {
+			return await wp.features.run(id, input);
+		},
+	}));
 };
 
 const { text } = await generateText({
-  model: openai("gpt-4o"),
-  tools: toolsFromFeatures(features),
-  system: `You are a friendly WordPress assistant! You must not make up tool parameters, always ask the user for the information needed, or use other tools to get the information needed.`,
-  prompt: "I want to update my post",
+	model: openai('gpt-4o'),
+	tools: toolsFromFeatures(features),
+	system: `You are a friendly WordPress assistant! You must not make up tool parameters, always ask the user for the information needed, or use other tools to get the information needed.`,
+	prompt: 'I want to update my post',
 });
 ```
 
@@ -186,15 +186,15 @@ wp_register_feature('woocommerce/products', [
 Now that we've registered this resource, the client can use it:
 
 ```tsx
-const feature = wp.features.find("woocommerce/product/report");
+const feature = wp.features.find('woocommerce/product/report');
 const report = await feature.run(
-  {
-    productId: "123",
-  },
-  // options
-  {
-    stream: false,
-  }
+	{
+		productId: '123',
+	},
+	// options
+	{
+		stream: false,
+	}
 );
 ```
 
@@ -203,52 +203,54 @@ This calls the REST API endpoint that's been registered by the feature. The requ
 Now the LLM can use this feature in a chat and we can start composing more complex AI workflows. Let's register a client feature for displaying a rich message to the user that renders a WooCommerce product report.
 
 ```tsx
-wp.features.register("woocommerce/rich_message/report", {
-  id: "woocommerce/rich_message/report",
-  name: "WooCommerce Rich Message Report",
-  type: "tool",
-  description:
-    "Displays a rich message to the user that renders a WooCommerce product report.",
-  input_schema: z.object({
-    userMessage: z.string(),
-    productId: z.string(),
-  }),
-  output_schema: z.object({
-    message: z.string(),
-    report: z.object({
-      name: z.string(),
-      description: z.string(),
-      total: z.number(),
-      monthly: z.array(
-        z.object({
-          month: z.string(),
-          amount: z.number(),
-        })
-      ),
-    }),
-  }),
-  callback: generateRichMessageReport,
+wp.features.register('woocommerce/rich_message/report', {
+	id: 'woocommerce/rich_message/report',
+	name: 'WooCommerce Rich Message Report',
+	type: 'tool',
+	description:
+		'Displays a rich message to the user that renders a WooCommerce product report.',
+	input_schema: z.object({
+		userMessage: z.string(),
+		productId: z.string(),
+	}),
+	output_schema: z.object({
+		message: z.string(),
+		report: z.object({
+			name: z.string(),
+			description: z.string(),
+			total: z.number(),
+			monthly: z.array(
+				z.object({
+					month: z.string(),
+					amount: z.number(),
+				})
+			),
+		}),
+	}),
+	callback: generateRichMessageReport,
 });
 
 async function generateRichMessageReport(context, feature) {
-  const { userMessage, productId } = context;
-  const { output_schema } = feature;
+	const { userMessage, productId } = context;
+	const { output_schema } = feature;
 
-  const productReportResource = wp.features.find("woocommerce/product/report");
-  const report = await productReportResource.run({ productId });
+	const productReportResource = wp.features.find(
+		'woocommerce/product/report'
+	);
+	const report = await productReportResource.run({ productId });
 
-  // Use the LLM to generate a rich message that complies with this feature's output schema.
-  const { text } = await generateText({
-    model: openai("gpt-4o"),
-    prompt: `You are a friendly WordPress assistant! Generate a rich message to the user that renders a WooCommerce product report and a response to the user's message.
+	// Use the LLM to generate a rich message that complies with this feature's output schema.
+	const { text } = await generateText({
+		model: openai('gpt-4o'),
+		prompt: `You are a friendly WordPress assistant! Generate a rich message to the user that renders a WooCommerce product report and a response to the user's message.
 
     User message: ${userMessage}
 
     Product report: ${JSON.stringify(report)}`,
-    schema: output_schema,
-  });
+		schema: output_schema,
+	});
 
-  return text;
+	return text;
 }
 ```
 
@@ -258,11 +260,10 @@ Now when the user asks to see a report for a product, the LLM can generate a ric
 const features = wp.features.get();
 
 const { text } = await generateText({
-  model: openai("gpt-4o"),
-  tools: toolsFromFeatures(features),
-  system:
-    "You are a friendly WordPress assistant! You've been provided a list of tools. If you need to use a tool with parameters, call a tool that can help you identify the parameters. For example, if you need to know the product ID, call the `woocommerce/products` tool.",
-  prompt: "I want to see a report for product 123",
+	model: openai('gpt-4o'),
+	tools: toolsFromFeatures(features),
+	system: "You are a friendly WordPress assistant! You've been provided a list of tools. If you need to use a tool with parameters, call a tool that can help you identify the parameters. For example, if you need to know the product ID, call the `woocommerce/products` tool.",
+	prompt: 'I want to see a report for product 123',
 });
 ```
 
@@ -275,8 +276,8 @@ To do this, we can define a server-side AI-driven feature as the entry-point to 
 We call it from the client in exactly the same way:
 
 ```tsx
-const feature = wp.features.find("woocommerce/product/report");
-const report = await feature.run({ productId: "123" });
+const feature = wp.features.find('woocommerce/product/report');
+const report = await feature.run({ productId: '123' });
 ```
 
 But register everything as a server-side feature:
@@ -361,7 +362,7 @@ wp_register_feature("woocommerce/product/report", [
 ```
 
 ```tsx
-const features = wp.features.get({ categories: ["woocommerce"] });
+const features = wp.features.get({ categories: ['woocommerce'] });
 ```
 
 ### Filter
@@ -383,28 +384,31 @@ wp_register_feature("woocommerce/product/report", [
 Or for the client, filter by client state:
 
 ```tsx
-wp.features.register("core/blocks/edit_color", {
-  type: "tool",
-  description: "Edits the color of a block for either the background or text.",
-  filter: () => {
-    const selectedBlockClientId =
-      select(blockEditorStore).getSelectedBlockClientId();
+wp.features.register('core/blocks/edit_color', {
+	type: 'tool',
+	description:
+		'Edits the color of a block for either the background or text.',
+	filter: () => {
+		const selectedBlockClientId =
+			select(blockEditorStore).getSelectedBlockClientId();
 
-    if (!selectedBlockClientId) {
-      return false;
-    }
+		if (!selectedBlockClientId) {
+			return false;
+		}
 
-    const selectedBlock = select(blockEditorStore).getBlock(
-      selectedBlockClientId
-    );
-    const blockType = select("core/blocks").getBlockType(selectedBlock.name);
+		const selectedBlock = select(blockEditorStore).getBlock(
+			selectedBlockClientId
+		);
+		const blockType = select('core/blocks').getBlockType(
+			selectedBlock.name
+		);
 
-    const hasBackgroundColorSetting =
-      blockType?.supports?.color?.background || false;
-    const hasTextColorSetting = blockType?.supports?.color?.text || false;
+		const hasBackgroundColorSetting =
+			blockType?.supports?.color?.background || false;
+		const hasTextColorSetting = blockType?.supports?.color?.text || false;
 
-    return hasBackgroundColorSetting || hasTextColorSetting;
-  },
+		return hasBackgroundColorSetting || hasTextColorSetting;
+	},
 });
 ```
 
@@ -412,8 +416,8 @@ Now we get out of the box filtering when we retrieve features:
 
 ```tsx
 const features = wp.features.get({
-  // true by default, so this isn't needed for filtering to apply.
-  filter: true,
+	// true by default, so this isn't needed for filtering to apply.
+	filter: true,
 });
 ```
 
@@ -447,12 +451,12 @@ This will return only the features that match the provided context of the client
 
 ```tsx
 const ctx = {
-  message: "I want to edit the color of the block",
-  blockId: 123,
+	message: 'I want to edit the color of the block',
+	blockId: 123,
 };
 
 const features = wp.features.get({
-  context: { infer: ctx, strict: false },
+	context: { infer: ctx, strict: false },
 });
 ```
 
@@ -476,31 +480,31 @@ Otherwise, we can resort to simple keyword search.
 This opens the door for some interesting features, like:
 
 ```tsx
-const userMessage = "I want to edit the color of the block";
+const userMessage = 'I want to edit the color of the block';
 
 const { embedding } = await embed({
-  model: openai.embedding("text-embedding-3-small"),
-  value: userMessage,
+	model: openai.embedding('text-embedding-3-small'),
+	value: userMessage,
 });
 
 const features = wp.features.get({
-  query: { semantic: { embedding } },
+	query: { semantic: { embedding } },
 });
 
 const { text } = await generateText({
-  model: openai("gpt-4o"),
-  tools: toolsFromFeatures(features),
-  prompt: userMessage,
+	model: openai('gpt-4o'),
+	tools: toolsFromFeatures(features),
+	prompt: userMessage,
 });
 ```
 
 If we can declare support for embedding in WordPress through a standard AI SDK, we can lean on this and make the query more developer friendly by embedding internally:
 
 ```tsx
-const userMessage = "I want to edit the color of the block";
+const userMessage = 'I want to edit the color of the block';
 
 const features = wp.features.get({
-  query: { semantic: { text: userMessage } },
+	query: { semantic: { text: userMessage } },
 });
 ```
 
@@ -517,11 +521,11 @@ Whenever, `wp.features.get` is called, it fetches the list of features from the 
 For client registered features only, you may simply share the client features as context with your call:
 
 ```tsx
-const features = wp.features.get({ location: "client" });
-const feature = wp.features.find("bigsky/assistant_router");
+const features = wp.features.get({ location: 'client' });
+const feature = wp.features.find('bigsky/assistant_router');
 const result = await feature.run({
-  features: features.map(({ id, description }) => ({ id, description })),
-  message: "I want to edit the color of the block",
+	features: features.map(({ id, description }) => ({ id, description })),
+	message: 'I want to edit the color of the block',
 });
 ```
 
@@ -529,12 +533,12 @@ But since this might be a common pattern, we can make things easier by automatic
 
 ```tsx
 const tool = await feature.run(
-  {
-    message: "I want to edit the color of the block",
-  },
-  {
-    shareFeatures: true,
-  }
+	{
+		message: 'I want to edit the color of the block',
+	},
+	{
+		shareFeatures: true,
+	}
 );
 ```
 
@@ -544,18 +548,18 @@ Or if you want more granular control, pass a callback that returns the same opti
 
 ```tsx
 const tool = await feature.run(
-  {
-    message: "I want to edit the color of the block",
-  },
-  {
-    shareFeatures: (ctx) => {
-      return {
-        location: "client", // setting this to server wouldn't make sense here, since they are already available on the server
-        categories: ["bigsky"],
-        context: { infer: ctx, strict: false },
-      };
-    },
-  }
+	{
+		message: 'I want to edit the color of the block',
+	},
+	{
+		shareFeatures: (ctx) => {
+			return {
+				location: 'client', // setting this to server wouldn't make sense here, since they are already available on the server
+				categories: ['bigsky'],
+				context: { infer: ctx, strict: false },
+			};
+		},
+	}
 );
 ```
 
@@ -569,54 +573,54 @@ The command palette already contains the parts needed to register features, so i
 
 ```js
 const command = {
-  id: "custom-command/clear-content",
-  name: "Clear Content",
-  label: __("Clear all content"),
-  icon: "trash",
-  callback: ({ close }) => {
-    if (confirm("Are you sure you want to clear all content?")) {
-      wp.data.dispatch("core/block-editor").resetBlocks([]);
-      createInfoNotice("Content cleared!", { type: "snackbar" });
-    }
-    close();
-  },
+	id: 'custom-command/clear-content',
+	name: 'Clear Content',
+	label: __('Clear all content'),
+	icon: 'trash',
+	callback: ({ close }) => {
+		if (confirm('Are you sure you want to clear all content?')) {
+			wp.data.dispatch('core/block-editor').resetBlocks([]);
+			createInfoNotice('Content cleared!', { type: 'snackbar' });
+		}
+		close();
+	},
 };
 const cmdSchema = z
-  .object({
-    close: z.function().optional(),
-    open: z.function().optional(),
-    isOpen: z.function().optional(),
-    search: z.function().optional(),
-    history: z.function().optional(),
-  })
-  .optional();
+	.object({
+		close: z.function().optional(),
+		open: z.function().optional(),
+		isOpen: z.function().optional(),
+		search: z.function().optional(),
+		history: z.function().optional(),
+	})
+	.optional();
 
 useCommand(command);
 
 registerFeature(command.id, {
-  name: command.name,
-  type: "tool",
-  description: "Clears all content from the editor.",
-  category: ["editor", "command-palette"],
-  input_schema: cmdSchema,
-  filter: () => {
-    return window.wp.editor !== undefined;
-  },
-  callback: async (props, _feature) => {
-    return command.callback(props);
-  },
+	name: command.name,
+	type: 'tool',
+	description: 'Clears all content from the editor.',
+	category: ['editor', 'command-palette'],
+	input_schema: cmdSchema,
+	filter: () => {
+		return window.wp.editor !== undefined;
+	},
+	callback: async (props, _feature) => {
+		return command.callback(props);
+	},
 });
 ```
 
 Now this command is available to the LLM and can be used in a prompt:
 
 ```tsx
-const features = wp.features.get({ location: "client" });
+const features = wp.features.get({ location: 'client' });
 
 const { text } = await generateText({
-  model: openai("gpt-4o"),
-  tools: toolsFromFeatures(features),
-  prompt: "I want to clear all content from the editor.",
+	model: openai('gpt-4o'),
+	tools: toolsFromFeatures(features),
+	prompt: 'I want to clear all content from the editor.',
 });
 ```
 
@@ -626,21 +630,21 @@ There's also the other route of using what's already registered to power the com
 
 ```js
 const features = wp.features.get({
-  location: "client",
-  categories: ["editor", "command-palette", "block-selection"],
+	location: 'client',
+	categories: ['editor', 'command-palette', 'block-selection'],
 });
 
 // register each feature as a command
 features.forEach((feature) => {
-  const command = {
-    name: feature.id,
-    label: feature.name,
-    icon: feature.meta.icon,
-    callback: feature.callback,
-    context: "block-selection",
-  };
+	const command = {
+		name: feature.id,
+		label: feature.name,
+		icon: feature.meta.icon,
+		callback: feature.callback,
+		context: 'block-selection',
+	};
 
-  wp.data.dispatch(wp.commands.store).registerCommand(command);
+	wp.data.dispatch(wp.commands.store).registerCommand(command);
 });
 ```
 
