@@ -40,7 +40,7 @@ function wp_feature_api_init() {
 	require_once WP_FEATURE_API_PLUGIN_DIR . 'server/includes/functions.php';
 
 	// Initialize the REST API endpoints.
-	require_once WP_FEATURE_API_PLUGIN_DIR . 'server/includes/rest-api/class-wp-rest-features-controller.php';
+	require_once WP_FEATURE_API_PLUGIN_DIR . 'server/includes/rest-api/class-wp-rest-feature-controller.php';
 
 	// Register REST routes on rest_api_init.
 	add_action( 'rest_api_init', 'wp_feature_api_register_rest_routes' );

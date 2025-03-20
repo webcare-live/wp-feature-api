@@ -11,6 +11,8 @@
 	<rule ref="WordPress">
 		<!-- Add any rules you want to exclude here -->
 		<!-- <exclude name="WordPress.Files.FileName.InvalidClassFileName" /> -->
+		<exclude name="WordPress.Arrays.MultipleStatementAlignment.DoubleArrowNotAligned" />
+		<exclude name="Generic.Formatting.MultipleStatementAlignment.NotSameWarning" />
 	</rule>
 
 	<!-- Include WordPress-Extra for additional best practices -->
