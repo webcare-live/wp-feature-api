@@ -23,14 +23,6 @@ class WP_Feature_Registry {
 	private static $instance = null;
 
 	/**
-	 * The registered features.
-	 *
-	 * @since 0.1.0
-	 * @var array
-	 */
-	private $features = array();
-
-	/**
 	 * The feature repository.
 	 *
 	 * @since 0.1.0
@@ -39,12 +31,41 @@ class WP_Feature_Registry {
 	private $repository = null;
 
 	/**
+	 * In-memory cache of fetched features.
+	 * Caches IDs only. Features are fetched from the repository when needed.
+	 *
+	 * @since 0.1.0
+	 * @var array
+	 */
+	private $feature_cache = array();
+
+	/**
 	 * Private constructor to prevent direct instantiation.
+	 * Sets the repository to use for the registry.
 	 *
 	 * @since 0.1.0
 	 */
 	private function __construct() {
-		// Initialize the registry.
+		require_once WP_FEATURE_API_PLUGIN_DIR . 'includes/interface-wp-feature-repository.php';
+		require_once WP_FEATURE_API_PLUGIN_DIR . 'includes/class-wp-feature-repository-memory.php';
+
+		$default_repository = new WP_Feature_Repository_Memory();
+		$repository = apply_filters( 'wp_feature_repository', $default_repository );
+
+		if ( ! $repository instanceof WP_Feature_Repository_Interface ) {
+			_doing_it_wrong(
+				__FUNCTION__,
+				sprintf(
+					/* translators: %s: WP_Feature_Repository_Interface */
+					__( 'The repository must implement %s. Falling back to default repository.', 'wp-feature-api' ),
+					'WP_Feature_Repository_Interface'
+				),
+				'0.1.0'
+			);
+			$repository = $default_repository;
+		}
+
+		$this->repository = $repository;
 	}
 
 	/**
@@ -69,13 +90,14 @@ class WP_Feature_Registry {
 	 * @return bool True if the feature was registered, false otherwise.
 	 */
 	public function register( $feature ) {
+
 		// Convert array to WP_Feature if necessary.
 		if ( is_array( $feature ) ) {
 			if ( ! isset( $feature['id'] ) ) {
 				return false;
 			}
 
-			$feature = new WP_Feature( $feature );
+			$feature = new WP_Feature( $feature['id'], $feature );
 		}
 
 		// Ensure the feature is a WP_Feature instance.
@@ -86,17 +108,21 @@ class WP_Feature_Registry {
 		// Get the feature ID.
 		$feature_id = $feature->get_id();
 
-		// Check if the feature is already registered.
-		if ( isset( $this->features[ $feature_id ] ) ) {
+		// Check if the feature is already registered in the repository.
+		if ( $this->repository->find( $feature_id ) ) {
 			return false;
 		}
 
-		// Register the feature.
-		$this->features[ $feature_id ] = $feature;
+		// Save the feature to the repository.
+		$saved = $this->repository->save( $feature );
 
-		// Persist the feature to the repository if available.
-		if ( $this->repository ) {
-			$this->repository->save( $feature );
+		if ( ! $saved ) {
+			return false;
+		}
+
+		// Update the cache if we're successful.
+		if ( ! in_array( $feature_id, $this->feature_cache, true ) ) {
+			$this->feature_cache[] = $feature_id;
 		}
 
 		/**
@@ -121,20 +147,23 @@ class WP_Feature_Registry {
 		// Get the feature ID.
 		$feature_id = $feature instanceof WP_Feature ? $feature->get_id() : $feature;
 
-		// Check if the feature is registered.
-		if ( ! isset( $this->features[ $feature_id ] ) ) {
+		// Check if the feature exists in the repository.
+		$feature_obj = $this->repository->find( $feature_id );
+
+		if ( ! $feature_obj ) {
 			return false;
 		}
 
-		// Get the feature object.
-		$feature_obj = $this->features[ $feature_id ];
+		// Remove the feature from the repository.
+		$deleted = $this->repository->delete( $feature_id );
 
-		// Unregister the feature.
-		unset( $this->features[ $feature_id ] );
+		if ( ! $deleted ) {
+			return false;
+		}
 
-		// Remove the feature from the repository if available.
-		if ( $this->repository ) {
-			$this->repository->delete( $feature_id );
+		// Clear the cache entry.
+		if ( isset( $this->feature_cache[ $feature_id ] ) ) {
+			unset( $this->feature_cache[ $feature_id ] );
 		}
 
 		/**
@@ -157,23 +186,20 @@ class WP_Feature_Registry {
 	 * @return WP_Feature|null The feature if found, null otherwise.
 	 */
 	public function find( $feature_id ) {
-		// Check if the feature is registered in memory.
-		if ( isset( $this->features[ $feature_id ] ) ) {
-			return $this->features[ $feature_id ];
+		// Check if the feature is in the cache.
+		if ( isset( $this->feature_cache[ $feature_id ] ) ) {
+			return $this->feature_cache[ $feature_id ];
 		}
 
-		// Check if the feature is in the repository.
-		if ( $this->repository ) {
-			$feature = $this->repository->find( $feature_id );
+		// Check the repository.
+		$feature = $this->repository->find( $feature_id );
 
-			if ( $feature ) {
-				// Cache the feature in memory.
-				$this->features[ $feature_id ] = $feature;
-				return $feature;
-			}
+		if ( $feature ) {
+			// Cache the feature.
+			$this->feature_cache[ $feature_id ] = $feature;
 		}
 
-		return null;
+		return $feature;
 	}
 
 	/**
@@ -184,9 +210,16 @@ class WP_Feature_Registry {
 	 * @return array The matching features.
 	 */
 	public function get( $query = null ) {
-		// If no query is provided, return all features.
+		// If no query is provided, get all features from the repository.
 		if ( null === $query ) {
-			return array_values( $this->features );
+			$features = $this->repository->get_all();
+
+			// Update the cache with all features.
+			foreach ( $features as $feature ) {
+				$this->feature_cache[ $feature->get_id() ] = $feature;
+			}
+
+			return $features;
 		}
 
 		// Convert array to WP_Feature_Query if necessary.
@@ -199,37 +232,24 @@ class WP_Feature_Registry {
 			return array();
 		}
 
-		// If we have a repository, query it first.
-		if ( $this->repository ) {
-			$features = $this->repository->query( $query );
+		// Query the repository.
+		$features = $this->repository->query( $query );
 
-			// Cache the features in memory.
-			foreach ( $features as $feature ) {
-				$this->features[ $feature->get_id() ] = $feature;
-			}
-		} else {
-			// Otherwise, filter the in-memory features.
-			$features = array_filter(
-				$this->features,
-				function ( $feature ) use ( $query ) {
-					return $query->matches( $feature );
-				}
-			);
-
-			$features = array_values( $features );
+		// Update the cache with the results.
+		foreach ( $features as $feature ) {
+			$this->feature_cache[ $feature->get_id() ] = $feature;
 		}
 
 		return $features;
 	}
 
 	/**
-	 * Sets the repository to use for the registry.
+	 * Clears the feature cache.
 	 *
 	 * @since 0.1.0
-	 * @param WP_Feature_Repository_Interface $repository The repository to use.
 	 * @return void
 	 */
-	public function use_repository( $repository ) {
-		$this->repository = $repository;
+	public function clear_cache() {
+		$this->feature_cache = array();
 	}
 }

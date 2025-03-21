@@ -12,7 +12,7 @@
  *
  * @since 0.1.0
  */
-class WP_Feature {
+class WP_Feature implements \JsonSerializable {
 	/**
 	 * Resource feature type constant.
 	 *
@@ -66,6 +66,8 @@ class WP_Feature {
 		self::LOCATION_SERVER,
 		self::LOCATION_CLIENT,
 	);
+
+	const ID_PATTERN = '[a-z0-9\-\/]+';
 
 	/**
 	 * The feature ID, unique identifier.
@@ -184,7 +186,17 @@ class WP_Feature {
 			return;
 		}
 
-		$this->id = sanitize_key( $id );
+		$validation_result = $this->validate_id( $id );
+		if ( is_wp_error( $validation_result ) ) {
+			_doing_it_wrong(
+				__METHOD__,
+				esc_html( $validation_result->get_error_message() ),
+				'0.1.0'
+			);
+			return;
+		}
+
+		$this->id = $id;
 		$result = $this->set_props( $args );
 
 		if ( is_wp_error( $result ) ) {
@@ -570,6 +582,16 @@ class WP_Feature {
 	}
 
 	/**
+	 * Converts the feature to a JSON serializable array.
+	 *
+	 * @since 0.1.0
+	 * @return array The feature as a JSON serializable array.
+	 */
+	public function jsonSerialize() {
+		return $this->to_array();
+	}
+
+	/**
 	 * Gets the filter ID for use in actions and filters following the WordPress filter naming convention.
 	 *
 	 * @since 0.1.0
@@ -577,5 +599,54 @@ class WP_Feature {
 	 */
 	private function get_filter_id() {
 		return 'wp_feature_' . sanitize_key( str_replace( '/', '_', $this->id ) );
+	}
+
+	/**
+	 * Validates the feature ID.
+	 *
+	 * Ensures the ID follows the required pattern: lowercase alphanumeric characters,
+	 * hyphens, and slashes for namespacing. The ID cannot start or end with a slash,
+	 * and cannot contain consecutive slashes.
+	 *
+	 * Examples of valid IDs:
+	 * - 'example'
+	 * - 'demo/site-info'
+	 * - 'namespace/feature-name/sub-feature'
+	 *
+	 * Examples of invalid IDs:
+	 * - 'UPPERCASE'      (contains uppercase)
+	 * - '/leading-slash' (starts with slash)
+	 * - 'trailing-slash/' (ends with slash)
+	 * - 'double//slash'  (contains consecutive slashes)
+	 * - 'special@chars'  (contains special characters)
+	 *
+	 * @since 0.1.0
+	 * @param string $id The feature ID to validate.
+	 * @return true|WP_Error True if valid, WP_Error otherwise.
+	 */
+	private function validate_id( $id ) {
+		if ( ! preg_match( '/^' . self::ID_PATTERN . '$/', $id ) ) {
+			return new WP_Error(
+				'invalid_feature_id',
+				sprintf(
+					/* translators: %s: Feature ID */
+					__( 'Feature ID must contain only lowercase alphanumeric characters, hyphens, and slashes. Received: %s', 'wp-feature-api' ),
+					$id
+				)
+			);
+		}
+
+		if ( substr( $id, 0, 1 ) === '/' || substr( $id, -1 ) === '/' || strpos( $id, '//' ) !== false ) {
+			return new WP_Error(
+				'invalid_feature_id_format',
+				sprintf(
+					/* translators: %s: Feature ID */
+					__( 'Feature ID cannot start or end with a slash, or contain consecutive slashes. Received: %s', 'wp-feature-api' ),
+					$id
+				)
+			);
+		}
+
+		return true;
 	}
 }
