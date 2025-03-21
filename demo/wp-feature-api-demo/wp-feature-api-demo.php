@@ -15,12 +15,10 @@
  * @package WordPress\Feature_API_Demo
  */
 
-// Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Check if WP Feature API plugin is active.
 if ( ! function_exists( 'wp_register_feature' ) ) {
 	add_action( 'admin_notices', 'wp_feature_api_demo_missing_notice' );
 	return;
@@ -55,9 +53,7 @@ function wp_feature_api_demo_missing_notice() {
  * @return void
  */
 function wp_feature_api_demo_init() {
-	// Load demo features.
 	require_once plugin_dir_path( __FILE__ ) . 'includes/demo-features.php';
 }
 
-// Initialize demo plugin on plugins_loaded after the main plugin.
 add_action( 'plugins_loaded', 'wp_feature_api_demo_init', 20 );
