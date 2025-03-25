@@ -202,15 +202,19 @@ class WP_Feature_Category {
 	 * Creates a new category instance.
 	 *
 	 * @since 0.1.0
-	 * @param string|array $category Category data.
+	 * @param string|array|WP_Feature_Category $category Category data.
 	 * @return WP_Feature_Category|null Category instance or null on failure.
 	 */
 	public static function make( $category ) {
-		try {
-			return new self( $category );
-		} catch ( Exception $e ) {
-			return null;
+		if ( $category instanceof WP_Feature_Category ) {
+			return $category;
 		}
+
+		if ( is_string( $category ) || is_array( $category ) ) {
+			return new self( $category );
+		}
+
+		return null;
 	}
 
 	/**

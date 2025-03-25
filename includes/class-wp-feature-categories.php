@@ -56,46 +56,77 @@ final class WP_Feature_Categories {
 	 * Adds or updates a category.
 	 *
 	 * @since 0.1.0
+	 *
 	 * @param string|array|WP_Feature_Category $category Category data.
-	 * @return WP_Feature_Category|null Category object or null on failure.
+	 * @return WP_Feature_Category|WP_Error Category object on success, WP_Error on failure.
 	 */
 	public function add( $category ) {
-		$category_obj = WP_Feature_Category::make( $category );
+		$cat = WP_Feature_Category::make( $category );
 
-		if ( ! $category_obj ) {
-			return null;
+		if ( ! $cat ) {
+			return new WP_Error(
+				'invalid_category',
+				__( 'Invalid category data provided.', 'wp-feature-api' )
+			);
 		}
 
-		$slug = $category_obj->get_slug();
+		$slug = $cat->get_slug();
 
 		if ( isset( $this->categories[ $slug ] ) ) {
-			// Update existing category.
-			$existing = $this->categories[ $slug ];
-			if ( ! empty( $category_obj->get_name() ) ) {
-				$existing->set_name( $category_obj->get_name() );
-			}
-			if ( ! empty( $category_obj->get_description() ) ) {
-				$existing->set_description( $category_obj->get_description() );
-			}
-
-			$category_obj = $existing;
+			$this->update_existing_category( $this->categories[ $slug ], $cat );
+			$cat = $this->categories[ $slug ];
+		} else {
+			$this->categories[ $slug ] = $cat;
 		}
 
-		$this->categories[ $slug ] = $category_obj;
-		$this->categories[ $slug ]->increment_count();
+		/**
+		 * Fires after a category is added or updated.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param WP_Feature_Category $cat     The category object.
+		 * @param bool               $is_update True if this was an update, false if a new category.
+		 */
+		do_action( 'wp_feature_category_added', $cat, isset( $this->categories[ $slug ] ) );
 
-		return $this->categories[ $slug ];
+		return $cat;
+	}
+
+	/**
+	 * Updates an existing category with new data.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param WP_Feature_Category $existing Existing category object.
+	 * @param WP_Feature_Category $updating New category object with updated data.
+	 */
+	private function update_existing_category( $existing, $updating ) {
+		if ( ! empty( $updating->get_name() ) ) {
+			$existing->set_name( $updating->get_name() );
+		}
+		if ( ! empty( $updating->get_description() ) ) {
+			$existing->set_description( $updating->get_description() );
+		}
 	}
 
 	/**
 	 * Removes a category.
 	 *
 	 * @since 0.1.0
-	 * @param string $slug Category slug.
-	 * @return bool True if category was removed, false otherwise.
+	 *
+	 * @param string|array|WP_Feature_Category $category Category to remove.
+	 * @return bool True if category was removed, false if category had features
 	 */
-	public function remove( $slug ) {
-		$category_obj = WP_Feature_Category::make( $slug );
+	public function remove( $category ) {
+		$category_obj = WP_Feature_Category::make( $category );
+
+		if ( ! $category_obj ) {
+			return new WP_Error(
+				'invalid_category',
+				__( 'Invalid category data provided.', 'wp-feature-api' )
+			);
+		}
+
 		$slug = $category_obj->get_slug();
 
 		if ( ! isset( $this->categories[ $slug ] ) ) {
@@ -103,10 +134,23 @@ final class WP_Feature_Categories {
 		}
 
 		$existing = $this->categories[ $slug ];
-		$existing->decrement_count();
-		if ( 0 === $existing->get_feature_count() ) {
-			unset( $this->categories[ $slug ] );
+		$feature_count = $existing->get_feature_count();
+
+		if ( $feature_count > 0 ) {
+			return false;
 		}
+
+		unset( $this->categories[ $slug ] );
+
+		/**
+		 * Fires after a category is removed.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param string $slug          The category slug that was removed.
+		 * @param int    $feature_count The number of features that were associated with this category.
+		 */
+		do_action( 'wp_feature_category_removed', $slug, $feature_count );
 
 		return true;
 	}
@@ -137,17 +181,11 @@ final class WP_Feature_Categories {
 			return;
 		}
 
-		/**
-		 * Filters the categories before they are registered.
-		 *
-		 * @since 0.1.0
-		 * @param array      $feature_categories The categories to be registered.
-		 * @param WP_Feature $feature           The feature being registered.
-		 */
-		$feature_categories = apply_filters( 'wp_feature_pre_register_categories', $feature_categories, $feature );
-
 		foreach ( $feature_categories as $category ) {
-			$this->add( $category );
+			$category_obj = $this->add( $category );
+			if ( $category_obj ) {
+				$category_obj->increment_count();
+			}
 		}
 	}
 
@@ -178,7 +216,10 @@ final class WP_Feature_Categories {
 		}
 
 		foreach ( $feature_categories as $category ) {
-			$this->remove( $category );
+			$result = $this->remove( $category );
+			if ( $result ) {
+				$category_obj->decrement_count();
+			}
 		}
 	}
 
