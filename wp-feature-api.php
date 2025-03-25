@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: WordPress Feature API
- * Plugin URI: https://wordpress.org/plugins/wp-features-api/
+ * Plugin URI: https://wordpress.org/plugins/wp-feature-api/
  * Description: A system for exposing server and client-side functionality in WordPress for use in LLMs and agentic systems.
  * Version: 0.1.0
  * Author: WordPress Contributors
