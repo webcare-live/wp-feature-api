@@ -1,5 +1,5 @@
 {
-	"name": "wp-features-api",
+	"name": "wp-feature-api",
 	"version": "1.0.0",
 	"description": "A system for exposing WordPress functionality in a standardized, discoverable way for both server and client-side use",
 	"main": "src/index.js",
@@ -10,7 +10,14 @@
 		"lint:js": "wp-scripts lint-js",
 		"packages-update": "wp-scripts packages-update",
 		"plugin-zip": "wp-scripts plugin-zip",
-		"start": "wp-scripts start"
+		"start": "wp-scripts start",
+		"env": "wp-env",
+		"test:unit:php:setup": "wp-env start",
+		"test:unit:php:setup:debug": "wp-env start --xdebug",
+		"test:unit:php:base": "wp-env run --env-cwd='wp-content/plugins/wp-feature-api' tests-wordpress vendor/bin/phpunit -c phpunit.xml.dist --verbose",
+		"test:unit:php": "npm-run-all test:unit:php:setup test:unit:php:base",
+		"test:unit:php:debug": "npm-run-all test:unit:php:setup:debug test:unit:php:base",
+		"wp-env": "wp-env"
 	},
 	"keywords": [
 		"wordpress",
@@ -34,6 +41,8 @@
 		"@wordpress/prettier-config": "^4.20.0",
 		"eslint": "^8.57.1",
 		"prettier": "^3.5.3",
-		"@wordpress/scripts": "^30.13.0"
+		"@wordpress/scripts": "^30.13.0",
+		"npm-run-all": "4.1.5",
+		"@wordpress/env": "^10.20.0"
 	}
 }

@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: WordPress Feature API
- * Plugin URI: https://wordpress.org/plugins/wp-features-api/
+ * Plugin URI: https://wordpress.org/plugins/wp-feature-api/
  * Description: A system for exposing server and client-side functionality in WordPress for use in LLMs and agentic systems.
  * Version: 0.1.0
  * Author: WordPress Contributors
@@ -38,23 +38,7 @@ if ( ! defined( 'WP_FEATURE_API_LOAD_DEMO' ) ) {
  * @return void
  */
 function wp_feature_api_init() {
-	// Include the WP_Feature_Query class.
-	require_once WP_FEATURE_API_PLUGIN_DIR . 'includes/class-wp-feature-query.php';
-
-	// Include the WP_Feature_Registry class.
-	require_once WP_FEATURE_API_PLUGIN_DIR . 'includes/class-wp-feature-registry.php';
-
-	// Include the WP_Feature class.
-	require_once WP_FEATURE_API_PLUGIN_DIR . 'includes/class-wp-feature.php';
-
-	// Include global functions.
-	require_once WP_FEATURE_API_PLUGIN_DIR . 'includes/wp-feature.php';
-
-	// Include core features.
-	require_once WP_FEATURE_API_PLUGIN_DIR . 'includes/default-wp-features.php';
-
-	// Initialize the REST API endpoints.
-	require_once WP_FEATURE_API_PLUGIN_DIR . 'includes/rest-api/class-wp-rest-feature-controller.php';
+	require_once WP_FEATURE_API_PLUGIN_DIR . 'includes/load.php';
 
 	// Register REST routes on rest_api_init.
 	add_action( 'rest_api_init', 'wp_feature_api_register_rest_routes' );
