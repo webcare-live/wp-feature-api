@@ -113,21 +113,6 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 			)
 		);
 
-		// Register GET endpoint for querying features.
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/query',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'query_items' ),
-					'permission_callback' => array( $this, 'get_items_permissions_check' ),
-					'args'                => $this->get_query_params(),
-				),
-				'schema' => array( $this, 'get_item_schema' ),
-			)
-		);
-
 		// Register GET endpoint for retrieving all features with pagination.
 		register_rest_route(
 			$this->namespace,
@@ -182,6 +167,9 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function get_items( $request ) {
+		// @todo: Create query object.
+		// $query = new WP_Feature_Query( $query_args );
+
 		$features = wp_feature_registry()->get();
 
 		// Handle pagination.
@@ -267,67 +255,6 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 		}
 
 		$response = rest_ensure_response( $result );
-		return $response;
-	}
-
-	/**
-	 * Queries features based on criteria.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @param WP_REST_Request $request Full data about the request.
-	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
-	 */
-	public function query_items( $request ) {
-		$registry = WP_Feature_Registry::get_instance();
-
-		// Build query args from request parameters.
-		$query_args = array();
-
-		// Filter by type.
-		if ( ! empty( $request['type'] ) ) {
-			$query_args['type'] = $request['type'];
-		}
-
-		// Filter by category.
-		if ( ! empty( $request['category'] ) ) {
-			$query_args['categories'] = array( $request['category'] );
-		}
-
-		// Filter by location.
-		if ( ! empty( $request['location'] ) ) {
-			$query_args['location'] = $request['location'];
-		}
-
-		// Create query object.
-		$query = new WP_Feature_Query( $query_args );
-
-		// Get features based on query.
-		$features = $registry->get( $query );
-
-		// Handle pagination.
-		$page     = $request['page'] ?? 1;
-		$per_page = $request['per_page'] ?? 10;
-		$offset   = ( $page - 1 ) * $per_page;
-
-		$total_features = count( $features );
-		$max_pages      = ceil( $total_features / $per_page );
-
-		// Apply pagination.
-		$features = array_slice( $features, $offset, $per_page );
-
-		$data = array();
-		foreach ( $features as $feature ) {
-			$item   = $this->prepare_item_for_response( $feature, $request );
-			$data[] = $this->prepare_response_for_collection( $item );
-		}
-
-		$response = rest_ensure_response( $data );
-
-		// Add pagination headers.
-		$response->header( 'X-WP-Total', $total_features );
-		$response->header( 'X-WP-TotalPages', $max_pages );
-
 		return $response;
 	}
 
