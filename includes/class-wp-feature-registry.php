@@ -39,7 +39,6 @@ class WP_Feature_Registry {
 	 */
 	private $features = array();
 
-
 	/**
 	 * @todo: keep track of categories
 	 * this will be important for use in inference using an LLM to narrow down the features by category.
@@ -178,7 +177,25 @@ class WP_Feature_Registry {
 	 * @return WP_Feature|null The feature if found, null otherwise.
 	 */
 	public function find( $feature_id, $type = null ) {
-		return $this->repository->find( $feature_id, $type );
+		$feature_id = self::generate_id( $feature_id, $type );
+
+		return $this->repository->find( $feature_id );
+	}
+
+	/**
+	 * Generates a feature ID.
+	 *
+	 * @since 0.1.0
+	 * @param string $id The feature ID.
+	 * @param string $type The type of feature.
+	 * @return string The generated feature ID.
+	 */
+	public static function generate_id( $id, $type ) {
+		if ( strpos( $id, $type . '-' ) !== false ) {
+			return $id;
+		}
+
+		return $type . '-' . $id;
 	}
 
 	/**
@@ -230,10 +247,7 @@ class WP_Feature_Registry {
 	 * @return void
 	 */
 	private function cache_clear() {
-		$this->features = array(
-			WP_Feature::TYPE_RESOURCE => array(),
-			WP_Feature::TYPE_TOOL => array(),
-		);
+		$this->features = array();
 	}
 
 	/**
@@ -244,7 +258,7 @@ class WP_Feature_Registry {
 	 * @return void
 	 */
 	private function cache_delete( $feature ) {
-		unset( $this->features[ $feature->get_type() ][ $feature->get_id() ] );
+		unset( $this->features[ $feature->get_id() ] );
 	}
 
 	/**
@@ -255,7 +269,7 @@ class WP_Feature_Registry {
 	 * @return bool True if the feature is cached, false otherwise.
 	 */
 	private function cache_has( $feature ) {
-		return isset( $this->features[ $feature->get_type() ][ $feature->get_id() ] );
+		return isset( $this->features[ $feature->get_id() ] );
 	}
 
 	/**
@@ -265,6 +279,7 @@ class WP_Feature_Registry {
 	 * @param WP_Feature $feature The feature to cache.
 	 */
 	private function cache_put( $feature ) {
-		$this->features[ $feature->get_type() ][] = $feature->get_id();
+		$this->features[] = $feature->get_id();
+		sort( $this->features );
 	}
 }

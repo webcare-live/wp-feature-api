@@ -241,21 +241,14 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 	 */
 	public function run_item( $request ) {
 		$context = $request->get_param( 'context' );
-		$type = WP_Feature::type_from_request_method( $request->get_method() );
-		$feature = wp_feature_registry()->find( $request['id'], $type );
-
-		if ( is_wp_error( $feature ) ) {
-			return $feature;
-		}
-
+		$feature = $request->get_param( 'feature' );
 		$result = $feature->run( $context );
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
 
-		$response = rest_ensure_response( $result );
-		return $response;
+		return rest_ensure_response( $result );
 	}
 
 	/**
@@ -285,9 +278,18 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 		$feature  = $registry->find( $id );
 
 		if ( ! $feature ) {
-			return true; // Let the callback handle the 404.
+			return new WP_Error(
+				'rest_feature_not_found',
+				sprintf(
+					// translators: %s is the feature ID.
+					__( 'Feature (%s) not found.', 'wp-feature-api' ),
+					$request['id']
+				),
+				array( 'status' => 404 )
+			);
 		}
 
+		return true; // Until permissions properly implemented.
 		// Get permissions from feature.
 		$permissions = $feature->get_permissions();
 
@@ -341,8 +343,19 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 		$feature = wp_feature_registry()->find( $request['id'] );
 
 		if ( ! $feature ) {
-			return true; // Let the callback handle the 404.
+			return new WP_Error(
+				'rest_feature_not_found',
+				sprintf(
+					// translators: %s is the feature ID.
+					__( 'Feature (%s) not found.', 'wp-feature-api' ),
+					$request['id']
+				),
+				array( 'status' => 404 )
+			);
 		}
+
+		$request->set_param( 'feature', $feature );
+		return true; // Until permissions properly implemented.
 
 		// Get permissions from feature.
 		$permissions = $feature->get_permissions();

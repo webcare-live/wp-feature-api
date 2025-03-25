@@ -274,7 +274,7 @@ class WP_Feature implements \JsonSerializable {
 	 * @return string The feature ID.
 	 */
 	public function get_id() {
-		return $this->id;
+		return $this->type . '-' . $this->id;
 	}
 
 	/**
@@ -653,7 +653,7 @@ class WP_Feature implements \JsonSerializable {
 	 */
 	public function to_array() {
 		$feature_data = array(
-			'id'            => $this->id,
+			'id'            => $this->get_id(),
 			'name'          => $this->name,
 			'description'   => $this->description,
 			'type'          => $this->type,

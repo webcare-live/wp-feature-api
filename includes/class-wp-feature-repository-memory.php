@@ -20,10 +20,7 @@ class WP_Feature_Repository_Memory implements WP_Feature_Repository_Interface {
 	 * @since 0.1.0
 	 * @var array
 	 */
-	private $features = array(
-		WP_Feature::TYPE_RESOURCE => array(),
-		WP_Feature::TYPE_TOOL => array(),
-	);
+	private $features = array();
 
 	/**
 	 * Saves a feature to the repository.
@@ -39,7 +36,7 @@ class WP_Feature_Repository_Memory implements WP_Feature_Repository_Interface {
 			return false;
 		}
 
-		$this->features[ $feature->get_type() ][ $feature->get_id() ] = $feature;
+		$this->features[ $feature->get_id() ] = $feature;
 
 		return true;
 	}
@@ -58,13 +55,11 @@ class WP_Feature_Repository_Memory implements WP_Feature_Repository_Interface {
 			return false;
 		}
 
-		$type_index = $this->features[ $feature->get_type() ];
-
-		if ( ! isset( $type_index[ $feature->get_id() ] ) ) {
+		if ( ! isset( $this->features[ $feature->get_id() ] ) ) {
 			return false;
 		}
 
-		unset( $type_index[ $feature->get_id() ] );
+		unset( $this->features[ $feature->get_id() ] );
 		return true;
 	}
 
@@ -72,22 +67,15 @@ class WP_Feature_Repository_Memory implements WP_Feature_Repository_Interface {
 	 * Finds a feature by its ID.
 	 *
 	 * @since 0.1.0
-	 * @param string|WP_Feature $feature The feature ID or feature object to find.
-	 * @param string|null       $type    The type of feature to find.
+	 * @param string $feature_id The feature ID to find.
 	 * @return WP_Feature|null The feature if found, null otherwise.
 	 */
-	public function find( $feature, $type = null ) {
-		$feature = WP_Feature::make( $feature );
-
-		if ( ! $feature ) {
+	public function find( $feature_id ) {
+		if ( ! is_string( $feature_id ) ) {
 			return null;
 		}
 
-		if ( $type ) {
-			return isset( $this->features[ $type ][ $feature->get_id() ] ) ? $this->features[ $type ][ $feature->get_id() ] : null;
-		}
-
-		return isset( $this->features[ $feature->get_type() ][ $feature->get_id() ] ) ? $this->features[ $feature->get_type() ][ $feature->get_id() ] : null;
+		return isset( $this->features[ $feature_id ] ) ? $this->features[ $feature_id ] : null;
 	}
 
 	/**
@@ -121,10 +109,7 @@ class WP_Feature_Repository_Memory implements WP_Feature_Repository_Interface {
 	 * @return array All features.
 	 */
 	public function get_all() {
-		return array_merge(
-			array_values( $this->features[ WP_Feature::TYPE_RESOURCE ] ),
-			array_values( $this->features[ WP_Feature::TYPE_TOOL ] )
-		);
+		return array_values( $this->features );
 	}
 
 	/**

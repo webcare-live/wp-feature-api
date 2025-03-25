@@ -36,11 +36,10 @@ interface WP_Feature_Repository_Interface {
 	 * Finds a feature by its ID.
 	 *
 	 * @since 0.1.0
-	 * @param string|WP_Feature $feature The feature ID or feature object to find.
-	 * @param string|null       $type    The type of feature to find.
+	 * @param string $feature_id The feature ID to find.
 	 * @return WP_Feature|null The feature if found, null otherwise.
 	 */
-	public function find( $feature, $type = null );
+	public function find( $feature_id );
 
 	/**
 	 * Queries features based on a query.
