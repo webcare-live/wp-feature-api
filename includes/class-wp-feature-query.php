@@ -13,7 +13,6 @@
  * @since 0.1.0
  */
 class WP_Feature_Query {
-
 	/**
 	 * The query arguments.
 	 *
