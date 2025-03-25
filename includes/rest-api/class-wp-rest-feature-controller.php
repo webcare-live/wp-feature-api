@@ -65,54 +65,6 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 	 * @since 0.1.0
 	 */
 	public function register_routes() {
-		$resource_base = '/' . $this->rest_base . '/(?P<id>' . WP_Feature::ID_PATTERN . ')';
-
-		// Register endpoint for executing features.
-		register_rest_route(
-			$this->namespace,
-			$resource_base . '/' . $this->run_path,
-			array(
-				'args'   => array(
-					'id' => array(
-						'description' => __( 'Unique identifier for the feature.', 'wp-feature-api' ),
-						'type'        => 'string',
-						'required'    => true,
-						'pattern'     => WP_Feature::ID_PATTERN,
-					),
-					'type' => array(
-						'description' => __( 'Type of the feature.', 'wp-feature-api' ),
-						'type'        => 'string',
-						'enum'        => WP_Feature::TYPES,
-						'default'     => WP_Feature::TYPE_DEFAULT,
-						'required'    => true,
-					),
-				),
-				array(
-					'methods'             => array( WP_REST_Server::CREATABLE, WP_REST_Server::READABLE ),
-					'callback'            => array( $this, 'run_item' ),
-					'permission_callback' => array( $this, 'run_item_permissions_check' ),
-					'args'                => array(
-						'metadata' => array(
-							'description' => __( 'Metadata for executing the feature.', 'wp-feature-api' ),
-							'type'        => 'object',
-							'properties'  => array(
-								'client_features' => array(
-									'type'        => 'array',
-									'items'       => $this->get_item_schema(),
-								),
-							),
-						),
-						'context' => array(
-							'description' => __( 'Context for executing the feature.', 'wp-feature-api' ),
-							'type'        => 'object',
-							'default'     => array(),
-						),
-					),
-				),
-				'schema' => array( $this, 'get_item_schema' ),
-			)
-		);
-
 		// Register GET endpoint for retrieving all features with pagination.
 		register_rest_route(
 			$this->namespace,
@@ -128,34 +80,11 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 			)
 		);
 
-		// Register GET endpoint for retrieving a specific feature by ID.
-		register_rest_route(
-			$this->namespace,
-			$resource_base,
-			array(
-				'args'   => array(
-					'id' => array(
-						'description' => __( 'Unique identifier for the feature.', 'wp-feature-api' ),
-						'type'        => 'string',
-						'required'    => true,
-						'pattern'     => WP_Feature::ID_PATTERN,
-					),
-					'type' => array(
-						'description' => __( 'Type of the feature.', 'wp-feature-api' ),
-						'type'        => 'string',
-						'enum'        => WP_Feature::TYPES,
-						'default'     => WP_Feature::TYPE_DEFAULT,
-						'required'    => true,
-					),
-				),
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_item' ),
-					'permission_callback' => array( $this, 'get_item_permissions_check' ),
-				),
-				'schema' => array( $this, 'get_item_schema' ),
-			)
-		);
+		// Get features after they've been registered.
+		$features = wp_feature_registry()->get();
+		foreach ( $features as $feature ) {
+			$this->register_feature_routes( $feature );
+		}
 	}
 
 	/**
@@ -195,60 +124,23 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 		$response->header( 'X-WP-Total', $total_features );
 		$response->header( 'X-WP-TotalPages', $max_pages );
 
-		return $response;
-	}
+		// Add pagination links.
+		$request_params = $request->get_query_params();
+		$base = add_query_arg( urlencode_deep( $request_params ), rest_url( sprintf( '%s/%s', $this->namespace, $this->rest_base ) ) );
 
-	/**
-	 * Retrieves a single feature.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @param WP_REST_Request $request Full data about the request.
-	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
-	 */
-	public function get_item( $request ) {
-		$id = $request['id'];
-		$type = $request['type'];
-
-		$registry = WP_Feature_Registry::get_instance();
-		$feature  = $registry->find( $id, $type );
-
-		if ( is_wp_error( $feature ) ) {
-			return $feature;
+		if ( $page > 1 ) {
+			$prev_page = $page - 1;
+			$prev_link = add_query_arg( 'page', $prev_page, $base );
+			$response->link_header( 'prev', $prev_link );
 		}
 
-		if ( ! $feature ) {
-			return new WP_Error(
-				'rest_feature_not_found',
-				__( 'Feature not found.', 'wp-feature-api' ),
-				array( 'status' => 404 )
-			);
+		if ( $page < $max_pages ) {
+			$next_page = $page + 1;
+			$next_link = add_query_arg( 'page', $next_page, $base );
+			$response->link_header( 'next', $next_link );
 		}
-
-		$data     = $this->prepare_item_for_response( $feature, $request );
-		$response = rest_ensure_response( $data );
 
 		return $response;
-	}
-
-	/**
-	 * Runs a feature.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @param WP_REST_Request $request Full data about the request.
-	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
-	 */
-	public function run_item( $request ) {
-		$context = $request->get_param( 'context' );
-		$feature = $request->get_param( 'feature' );
-		$result = $feature->run( $context );
-
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		return rest_ensure_response( $result );
 	}
 
 	/**
@@ -261,141 +153,6 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 	 */
 	public function get_items_permissions_check( $request ) {
 		return current_user_can( 'read' );
-	}
-
-	/**
-	 * Checks if a given request has access to read a feature.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return true|WP_Error True if the request has read access, WP_Error object otherwise.
-	 */
-	public function get_item_permissions_check( $request ) {
-		$id = $request['id'];
-
-		$registry = WP_Feature_Registry::get_instance();
-		$feature  = $registry->find( $id );
-
-		if ( ! $feature ) {
-			return new WP_Error(
-				'rest_feature_not_found',
-				sprintf(
-					// translators: %s is the feature ID.
-					__( 'Feature (%s) not found.', 'wp-feature-api' ),
-					$request['id']
-				),
-				array( 'status' => 404 )
-			);
-		}
-
-		return true; // Until permissions properly implemented.
-		// Get permissions from feature.
-		$permissions = $feature->get_permissions();
-
-		// If permissions is a callable, call it with the feature and request.
-		if ( is_callable( $permissions ) ) {
-			$result = call_user_func( $permissions, $feature, $request );
-			if ( is_wp_error( $result ) ) {
-				return $result;
-			}
-			return true;
-		}
-
-		// If permissions is a string or array, check capabilities.
-		if ( is_string( $permissions ) && ! empty( $permissions ) ) {
-			if ( ! current_user_can( $permissions ) ) {
-				return new WP_Error(
-					'rest_forbidden',
-					__( 'Sorry, you are not allowed to view this feature.', 'wp-feature-api' ),
-					array( 'status' => rest_authorization_required_code() )
-				);
-			}
-			return true;
-		}
-
-		if ( is_array( $permissions ) && ! empty( $permissions ) ) {
-			foreach ( $permissions as $capability ) {
-				if ( ! current_user_can( $capability ) ) {
-					return new WP_Error(
-						'rest_forbidden',
-						__( 'Sorry, you are not allowed to view this feature.', 'wp-feature-api' ),
-						array( 'status' => rest_authorization_required_code() )
-					);
-				}
-			}
-			return true;
-		}
-
-		// Default to requiring read permission.
-		return current_user_can( 'read' );
-	}
-
-	/**
-	 * Checks if a given request has access to run a feature.
-	 *
-	 * @since 0.1.0
-	 *
-	 * @param WP_REST_Request $request Full details about the request.
-	 * @return true|WP_Error True if the request has read access, WP_Error object otherwise.
-	 */
-	public function run_item_permissions_check( $request ) {
-		$feature = wp_feature_registry()->find( $request['id'] );
-
-		if ( ! $feature ) {
-			return new WP_Error(
-				'rest_feature_not_found',
-				sprintf(
-					// translators: %s is the feature ID.
-					__( 'Feature (%s) not found.', 'wp-feature-api' ),
-					$request['id']
-				),
-				array( 'status' => 404 )
-			);
-		}
-
-		$request->set_param( 'feature', $feature );
-		return true; // Until permissions properly implemented.
-
-		// Get permissions from feature.
-		$permissions = $feature->get_permissions();
-
-		// If permissions is a callable, call it with the feature and request.
-		if ( is_callable( $permissions ) ) {
-			$result = call_user_func( $permissions, $feature, $request );
-			if ( is_wp_error( $result ) ) {
-				return $result;
-			}
-			return true;
-		}
-
-		// If permissions is a string or array, check capabilities.
-		if ( is_string( $permissions ) && ! empty( $permissions ) ) {
-			if ( ! current_user_can( $permissions ) ) {
-				return new WP_Error(
-					'rest_forbidden',
-					__( 'Sorry, you are not allowed to run this feature.', 'wp-feature-api' ),
-					array( 'status' => rest_authorization_required_code() )
-				);
-			}
-			return true;
-		}
-
-		if ( is_array( $permissions ) && ! empty( $permissions ) ) {
-			foreach ( $permissions as $capability ) {
-				if ( ! current_user_can( $capability ) ) {
-					return new WP_Error(
-						'rest_forbidden',
-						__( 'Sorry, you are not allowed to run this feature.', 'wp-feature-api' ),
-						array( 'status' => rest_authorization_required_code() )
-					);
-				}
-			}
-			return true;
-		}
-
-		// Default to requiring edit permission for executing tools.
-		return current_user_can( 'edit_posts' );
 	}
 
 	/**
@@ -626,7 +383,7 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 			foreach ( $alternate_features as $alternate_feature ) {
 				$url = $this->get_feature_url( $alternate_feature );
 				$links['related'][] = array(
-					'href'   => add_query_arg( 'type', $alternate_feature->get_type(), $url ),
+					'href'   => $this->get_feature_url( $alternate_feature ),
 					'method' => 'GET',
 				);
 
@@ -678,5 +435,70 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 	 */
 	private function get_feature_run_url( $feature ) {
 		return $this->get_feature_url( $feature ) . '/' . $this->run_path;
+	}
+
+	/**
+	 * Registers the routes for a feature.
+	 * Includes the run endpoint and the GET endpoint for the feature.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param WP_Feature $feature The feature object.
+	 */
+	private function register_feature_routes( $feature ) {
+		$resource_base = '/' . $this->rest_base . '/' . $feature->get_id();
+
+		// Register run endpoint for executing features.
+		register_rest_route(
+			$this->namespace,
+			$resource_base . '/' . $this->run_path,
+			array(
+				array(
+					'methods'             => $feature->get_rest_method(),
+					'callback'            => function ( $request ) use ( $feature ) {
+						$context = $request->get_param( 'context' );
+						$result = $feature->run( $context );
+						return rest_ensure_response( $result );
+					},
+					'permission_callback' => array( $feature, 'get_permission_callback' ),
+					'args'                => array(
+						'metadata' => array(
+							'description' => __( 'Metadata for executing the feature.', 'wp-feature-api' ),
+							'type'        => 'object',
+							'properties'  => array(
+								'client_features' => array(
+									'type'        => 'array',
+									'items'       => $this->get_item_schema(),
+								),
+							),
+						),
+						'context' => array(
+							'description' => __( 'Context for executing the feature.', 'wp-feature-api' ),
+							'type'        => 'object',
+							'default'     => array(),
+							'properties'  => $feature->get_input_schema(),
+						),
+					),
+				),
+				'schema' => array( $feature, 'get_item_schema' ),
+			)
+		);
+
+		// Register GET endpoint for retrieving a specific feature by ID.
+		register_rest_route(
+			$this->namespace,
+			$resource_base,
+			array(
+				array(
+					'methods'             => $feature->get_rest_method(),
+					'callback'            => function ( $request ) use ( $feature ) {
+						$data     = $this->prepare_item_for_response( $feature, $request );
+						return rest_ensure_response( $data );
+					},
+					'permission_callback' => array( $feature, 'get_permission_callback' ),
+				),
+				'schema' => array( $feature, 'get_output_schema' ),
+			)
+		);
 	}
 }

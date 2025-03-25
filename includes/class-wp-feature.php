@@ -158,12 +158,12 @@ class WP_Feature implements \JsonSerializable {
 	private $callback;
 
 	/**
-	 * The feature permissions.
+	 * The feature permission callback.
 	 *
 	 * @since 0.1.0
-	 * @var string|array|callable
+	 * @var callable
 	 */
-	private $permissions;
+	private $permission_callback;
 
 	/**
 	 * The feature filter.
@@ -358,23 +358,19 @@ class WP_Feature implements \JsonSerializable {
 	}
 
 	/**
-	 * Gets the feature permissions.
+	 * Gets the feature permission callback.
 	 *
 	 * @since 0.1.0
-	 * @return string|array|callable The feature permissions.
+	 * @return callable The feature permission callback.
 	 */
-	public function get_permissions() {
-		/**
-		 * Filters the feature permissions.
-		 *
-		 * @since 0.1.0
-		 * @param string|array|callable $permissions The feature permissions.
-		 * @param WP_Feature           $feature     The feature object.
-		 */
-		$permissions = apply_filters( 'wp_feature_permissions', $this->permissions );
-		$permissions = apply_filters( $this->get_filter_id() . '_permissions', $permissions );
+	public function get_permission_callback() {
+		if ( is_callable( $this->permission_callback ) ) {
+			return $this->permission_callback;
+		}
 
-		return $permissions;
+		return function () {
+			return false;
+		};
 	}
 
 	/**
@@ -538,7 +534,7 @@ class WP_Feature implements \JsonSerializable {
 				'input_schema' => array(),
 				'output_schema' => array(),
 				'callback'     => null,
-				'permissions'  => '',
+				'permission_callback' => null,
 				'filter'       => null,
 				'rest_alias'   => false,
 			)
@@ -582,7 +578,7 @@ class WP_Feature implements \JsonSerializable {
 		$this->callback = is_callable( $args['callback'] ) || null === $args['callback'] ? $args['callback'] : null;
 
 		// Permissions can be string, array, or callable.
-		$this->permissions = $args['permissions'];
+		$this->permission_callback = $args['permission_callback'];
 
 		// Filter must be callable or null.
 		$this->filter = is_callable( $args['filter'] ) || null === $args['filter'] ? $args['filter'] : null;
@@ -739,7 +735,7 @@ class WP_Feature implements \JsonSerializable {
 		}
 
 		if ( isset( $rest_alias['permission_callback'] ) ) {
-			$this->permissions = $rest_alias['permission_callback'];
+			$this->permission_callback = $rest_alias['permission_callback'];
 		}
 
 		if ( isset( $rest_alias['callback'] ) && is_callable( $rest_alias['callback'] ) ) {
