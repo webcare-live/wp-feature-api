@@ -6,7 +6,7 @@
 	<exclude-pattern>/vendor/*</exclude-pattern>
 	<exclude-pattern>/node_modules/*</exclude-pattern>
 	<exclude-pattern>/tests/bootstrap.php</exclude-pattern>
-
+	<exclude-pattern>/demo/*</exclude-pattern>
 	<!-- Include the WordPress standard -->
 	<rule ref="WordPress">
 		<!-- Add any rules you want to exclude here -->
