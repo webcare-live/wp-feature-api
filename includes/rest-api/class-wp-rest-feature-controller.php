@@ -96,10 +96,8 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function get_items( $request ) {
-		// @todo: Create query object.
-		// $query = new WP_Feature_Query( $query_args );
-
-		$features = wp_feature_registry()->get();
+		$query = new WP_Feature_Query( $request->get_query_params() );
+		$features = wp_feature_registry()->get( $query );
 
 		// Handle pagination.
 		$page     = $request['page'] ?? 1;
@@ -184,7 +182,7 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 	 * @return array Collection parameters.
 	 */
 	public function get_collection_params() {
-		return array(
+		$base = array(
 			'page'     => array(
 				'description'       => __( 'Current page of the collection.', 'wp-feature-api' ),
 				'type'              => 'integer',
@@ -209,6 +207,10 @@ class WP_REST_Feature_Controller extends WP_REST_Controller {
 				'validate_callback' => 'rest_validate_request_arg',
 			),
 		);
+
+		$schema = array_merge( $base, WP_Feature_Query::schema() );
+
+		return $schema;
 	}
 
 	/**
