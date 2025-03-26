@@ -3,20 +3,19 @@
 namespace A8C\WpFeatureApiDemo;
 
 use A8C\WpFeatureApiDemo\RegisterFeatures;
+use A8C\WpFeatureApiDemo\BootstrapAssets;
 
 class Main {
-
-	public function __construct() {
-		add_action( 'init', [ $this, 'init' ], 20 );
-	}
 
 	public function init() {
 		if ( ! function_exists( 'wp_register_feature' ) ) {
 			add_action( 'admin_notices', [ $this, 'missing_notice' ] );
 		}
 
-		$features = new RegisterFeatures();
-		add_action( 'init', [ $features, 'register_features' ] );
+		load_plugin_textdomain( 'wp-feature-api-demo', false, dirname( plugin_basename( WP_FEATURE_API_DEMO_PATH ) ) . '/languages' );
+
+		(new RegisterFeatures())->init();
+		(new BootstrapAssets())->init();
 	}
 
 	/**

@@ -1,0 +1,55 @@
+#wp-feature-api-demo-root {
+	height: 500px;
+	width: 300px;
+	max-width: 600px;
+	margin: 15px;
+	display: flex;
+	flex-direction: column;
+	position: fixed;
+	bottom: 0px;
+	right: 0px;
+
+	.card-container {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.wp-feature-api-demo-messages {
+		flex: 1;
+		overflow-y: auto;
+		padding: 20px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+
+		.wp-feature-api-demo-message {
+			max-width: 80%;
+			padding: 10px 15px;
+			border-radius: 15px;
+			word-wrap: break-word;
+
+			&.user {
+				align-self: flex-end;
+				background-color: #007cba;
+				color: white;
+			}
+
+			&.ai {
+				align-self: flex-start;
+				background-color: #f0f0f0;
+			}
+		}
+	}
+
+	.wp-feature-api-demo-input {
+		padding: 20px;
+		border-top: 1px solid #ddd;
+		display: flex;
+		gap: 10px;
+
+		.components-text-control__input {
+			flex: 1;
+		}
+	}
+}

@@ -5,6 +5,10 @@ namespace A8C\WpFeatureApiDemo;
 use WP_Feature;
 
 class RegisterFeatures {
+	public function init() {
+		add_action( 'init', [ $this, 'register_features' ] );
+	}
+
 	/**
 	 * Register demo features.
 	 *

@@ -19,7 +19,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-require_once plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
+define( 'WP_FEATURE_API_DEMO_PATH', plugin_dir_path( __FILE__ ) );
+define( 'WP_FEATURE_API_DEMO_URL', plugin_dir_url( __FILE__ ) );
+
+require_once WP_FEATURE_API_DEMO_PATH . 'vendor/autoload.php';
 
 use A8C\WpFeatureApiDemo\Main;
 
