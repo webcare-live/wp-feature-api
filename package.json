@@ -17,6 +17,7 @@
 		"test:unit:php:base": "wp-env run --env-cwd='wp-content/plugins/wp-feature-api' tests-wordpress vendor/bin/phpunit -c phpunit.xml.dist --verbose",
 		"test:unit:php": "npm-run-all test:unit:php:setup test:unit:php:base",
 		"test:unit:php:debug": "npm-run-all test:unit:php:setup:debug test:unit:php:base",
+		"serve": "wp-env start --xdebug",
 		"wp-env": "wp-env"
 	},
 	"keywords": [

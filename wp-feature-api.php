@@ -28,7 +28,7 @@ define( 'WP_FEATURE_API_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
  * Example: define( 'WP_FEATURE_API_LOAD_DEMO', true );
  */
 if ( ! defined( 'WP_FEATURE_API_LOAD_DEMO' ) ) {
-	define( 'WP_FEATURE_API_LOAD_DEMO', false );
+	define( 'WP_FEATURE_API_LOAD_DEMO', true );
 }
 
 /**
