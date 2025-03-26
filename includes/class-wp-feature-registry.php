@@ -251,6 +251,17 @@ class WP_Feature_Registry {
 	}
 
 	/**
+	 * Gets a feature category by its ID.
+	 *
+	 * @since 0.1.0
+	 * @param string $id The category ID.
+	 * @return WP_Feature_Category|null The category if found, null otherwise.
+	 */
+	public function get_category( $id ) {
+		return $this->categories->get( $id );
+	}
+
+	/**
 	 * Removes a feature from the repository and cache.
 	 *
 	 * @since 0.1.0
