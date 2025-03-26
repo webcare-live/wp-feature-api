@@ -26,11 +26,8 @@ export const getRegisteredFeature = ( state, id ) =>
 
 // Return the feature callback
 export const getRegisteredFeatureCallback = createRegistrySelector(
-	( select ) => ( state, attributeName ) => {
-		const feature = select( store ).getRegisteredFeature(
-			state,
-			attributeName
-		);
+	( select ) => ( state, id ) => {
+		const feature = select( store ).getRegisteredFeature( id );
 		return feature?.callback;
 	}
 );
