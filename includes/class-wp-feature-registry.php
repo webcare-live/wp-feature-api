@@ -215,7 +215,15 @@ class WP_Feature_Registry {
 		}
 
 		if ( ! $query instanceof WP_Feature_Query ) {
-			return array();
+			_doing_it_wrong(
+				__FUNCTION__,
+				sprintf(
+					/* translators: %s: WP_Feature_Query */
+					__( 'The query must be an instance of %s. Falling back to all features.', 'wp-feature-api' ),
+					'WP_Feature_Query'
+				),
+				'0.1.0'
+			);
 		}
 
 		return $this->repository->query( $query );

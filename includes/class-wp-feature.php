@@ -166,12 +166,12 @@ class WP_Feature implements \JsonSerializable {
 	private $permission_callback;
 
 	/**
-	 * The feature filter.
+	 * The feature is_eligible.
 	 *
 	 * @since 0.1.0
 	 * @var callable
 	 */
-	private $filter;
+	private $is_eligible;
 
 	/**
 	 * The feature location.
@@ -374,13 +374,17 @@ class WP_Feature implements \JsonSerializable {
 	}
 
 	/**
-	 * Gets the feature filter.
+	 * Determines if the feature is eligible to run.
 	 *
 	 * @since 0.1.0
-	 * @return callable|null The feature filter.
+	 * @return bool True if the feature is eligible, false otherwise.
 	 */
-	public function get_filter() {
-		return $this->filter;
+	public function is_eligible() {
+		if ( ! is_callable( $this->is_eligible ) ) {
+			return true;
+		}
+
+		return call_user_func( $this->is_eligible );
 	}
 
 	/**
@@ -535,7 +539,7 @@ class WP_Feature implements \JsonSerializable {
 				'output_schema' => array(),
 				'callback'     => null,
 				'permission_callback' => null,
-				'filter'       => null,
+				'is_eligible'       => null,
 				'rest_alias'   => false,
 			)
 		);
@@ -581,7 +585,7 @@ class WP_Feature implements \JsonSerializable {
 		$this->permission_callback = $args['permission_callback'];
 
 		// Filter must be callable or null.
-		$this->filter = is_callable( $args['filter'] ) || null === $args['filter'] ? $args['filter'] : null;
+		$this->is_eligible = is_callable( $args['is_eligible'] ) || null === $args['is_eligible'] ? $args['is_eligible'] : null;
 
 		// Rest alias must be false or a string.
 		$this->rest_alias = false === $args['rest_alias'] || is_string( $args['rest_alias'] ) ? $args['rest_alias'] : false;

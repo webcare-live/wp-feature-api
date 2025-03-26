@@ -86,19 +86,12 @@ class WP_Feature_Repository_Memory implements WP_Feature_Repository_Interface {
 	 * @return array The matching features.
 	 */
 	public function query( $query ) {
-		if ( ! $query instanceof WP_Feature_Query ) {
-			return array();
-		}
-
 		$matches = array();
-		foreach ( $this->features as $type => $features ) {
-			foreach ( $features as $feature ) {
-				if ( $query->matches( $feature ) ) {
-					$matches[] = $feature;
-				}
+		foreach ( $this->features as $feature ) {
+			if ( $query->matches( $feature ) ) {
+				$matches[] = $feature;
 			}
 		}
-
 		return $matches;
 	}
 
@@ -120,5 +113,16 @@ class WP_Feature_Repository_Memory implements WP_Feature_Repository_Interface {
 	 */
 	public function clear() {
 		$this->features = array();
+	}
+
+	/**
+	 * Uses the native WP_Feature_Query class to filter features.
+	 *
+	 * @since 0.1.0
+	 * @param WP_Feature_Query $query The query to check.
+	 * @return bool Whether the repository can handle this query natively.
+	 */
+	public function supports_native_query( $query ) {
+		return false;
 	}
 }

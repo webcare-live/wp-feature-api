@@ -51,6 +51,15 @@ interface WP_Feature_Repository_Interface {
 	public function query( $query );
 
 	/**
+	 * Optional method to check if the repository supports native querying.
+	 *
+	 * @since 0.1.0
+	 * @param WP_Feature_Query $query The query to check.
+	 * @return bool Whether the repository can handle this query natively.
+	 */
+	public function supports_native_query( $query );
+
+	/**
 	 * Gets all features in the repository.
 	 *
 	 * @since 0.1.0
