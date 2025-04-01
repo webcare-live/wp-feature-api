@@ -19,7 +19,7 @@ export function getRegisteredFeatures() {
 	};
 }
 
-export function getRegisteredFeature( id ) {
+export function getRegisteredFeature( id: string ) {
 	return async ( { dispatch, registry } ) => {
 		const featureAlreadyExists = !! registry
 			.select( store )
