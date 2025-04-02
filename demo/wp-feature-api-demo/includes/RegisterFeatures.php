@@ -20,7 +20,7 @@ class RegisterFeatures {
 			array(
 				'id'          => 'demo/site-info',
 				'name'        => __( 'Site Information', 'wp-feature-api-demo' ),
-				'description' => __( 'Get basic information about the WordPress site.', 'wp-feature-api-demo' ),
+				'description' => __( 'Get basic information about the WordPress site. This includes the name, description, URL, version, language, timezone, date format, time format, active plugins, and active theme.', 'wp-feature-api-demo' ),
 				'type'        => WP_Feature::TYPE_RESOURCE,
 				'categories'  => array( 'demo', 'site', 'information' ),
 				'callback'    => 'wp_feature_api_demo_site_info_callback',
@@ -30,7 +30,7 @@ class RegisterFeatures {
 			array(
 				'id'          => 'demo/woocommerce-info',
 				'name'        => __( 'WooCommerce Information', 'wp-feature-api-demo' ),
-				'description' => __( 'Get basic information about the WooCommerce site.', 'wp-feature-api-demo' ),
+				'description' => __( 'Get basic information about the configuration of WooCommerce. This includes the currency, country, language, timezone, date format, and time format.', 'wp-feature-api-demo' ),
 				'type'        => WP_Feature::TYPE_RESOURCE,
 				'categories'  => array( 'demo', 'woocommerce', 'information' ),
 				'callback'    => 'wp_feature_api_demo_woocommerce_info_callback',
