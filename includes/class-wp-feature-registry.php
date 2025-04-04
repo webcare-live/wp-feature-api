@@ -186,7 +186,6 @@ class WP_Feature_Registry {
 	 */
 	public function find( $feature_id, $type = null ) {
 		$feature_id = self::generate_id( $feature_id, $type );
-
 		return $this->repository->find( $feature_id );
 	}
 
@@ -234,7 +233,14 @@ class WP_Feature_Registry {
 			);
 		}
 
-		return $this->repository->query( $query );
+		$features = $this->repository->query( $query );
+
+		return array_filter(
+			$features,
+			function ( $feature ) {
+				return $feature->is_eligible();
+			}
+		);
 	}
 
 	/**

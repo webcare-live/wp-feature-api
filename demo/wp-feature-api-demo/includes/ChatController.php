@@ -5,14 +5,9 @@ namespace A8C\WpFeatureApiDemo;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_Error;
-use OpenAI;
-use WP_Feature_Query;
+use A8C\WpFeatureApiDemo\Agent\BasicAgent;
+
 class ChatController extends WP_REST_Controller {
-
-	private string $api_key;
-
-	private bool $strict_schemas = true;
-
 	/**
 	 * Constructor.
 	 *
@@ -21,16 +16,6 @@ class ChatController extends WP_REST_Controller {
 	public function __construct() {
 		$this->namespace = 'wp/v2';
 		$this->rest_base = 'demo-chat';
-
-		$this->api_key = Options::get_api_key();
-
-		if (empty($this->api_key)) {
-			return new WP_Error(
-				'missing_api_key',
-				__('OpenAI API key is not configured. Please set it in the Feature API Demo settings.', 'wp-feature-api-demo'),
-				['status' => 500]
-			);
-		}
 	}
 
 	public function register_routes() {
@@ -60,68 +45,11 @@ class ChatController extends WP_REST_Controller {
 			);
 		}
 
+		$agent = new BasicAgent();
+		$agent->user_message( $message )->run();
+
 		return rest_ensure_response([
-			'response' => $this->get_chat_response($message),
+			'response' => $agent->get_messages(),
 		]);
-	}
-
-	private function get_chat_response( string $message ) {
-		$client = OpenAI::client($this->api_key);
-		$tools = \wp_feature_registry()->get();
-
-		$prompt = [
-			'model' => 'gpt-4o',
-			'messages' => [
-				['role' => 'system', 'content' => 'You are a helpful WordPress assistant in the dashboard that can use the following tools to resources to help the user. If you are unsure what tool to call, just ask the user to clarify.'],
-				['role' => 'user', 'content' => $message],
-			],
-			'tools' => $this->tools_from_features($tools),
-		];
-
-		$result = $client->chat()->create($prompt);
-		$message = $result->choices[0]->message;
-
-		if( ! empty( $message->content ) ) {
-			return $message->content;
-		} else {
-			// tool call
-			$function = $message->toolCalls[0]->function;
-			$feature = $function->name;
-			$parameters = json_decode( $function->arguments, true );
-
-			$result = null;
-			// $result = \wp_feature_registry()->find( $feature )->run( $parameters );
-			return array( $feature, $parameters, $result );
-		}
-
-		return $result;
-	}
-
-	private function tools_from_features( array $features ) {
-		return array_map(function($feature) {
-			$compatible_name = substr(str_replace('/', '_', $feature->get_id()), -64);
-			$parameters = $feature->get_input_schema();
-			$function = [
-				'name' => $compatible_name,
-				'description' => $feature->get_description(),
-				'strict' => $this->strict_schemas,
-			];
-
-			// additionalProperties is always present. So 1 is considered empty.
-			if ( count( $parameters ) > 1 ) {
-				$function['parameters'] = $parameters;
-			} else {
-				$function['parameters'] = [
-					'type' => 'object',
-					'properties' => new \stdClass(),
-					'additionalProperties' => false,
-				];
-			}
-
-			return [
-				'type' => 'function',
-				'function' => $function,
-			];
-		}, $features);
 	}
 }

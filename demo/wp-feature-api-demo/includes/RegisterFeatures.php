@@ -23,7 +23,7 @@ class RegisterFeatures {
 				'description' => __( 'Get basic information about the WordPress site. This includes the name, description, URL, version, language, timezone, date format, time format, active plugins, and active theme.', 'wp-feature-api-demo' ),
 				'type'        => WP_Feature::TYPE_RESOURCE,
 				'categories'  => array( 'demo', 'site', 'information' ),
-				'callback'    => 'wp_feature_api_demo_site_info_callback',
+				'callback'    => [ $this, 'site_info_callback' ],
 			)
 		);
 		wp_register_feature(
@@ -33,7 +33,13 @@ class RegisterFeatures {
 				'description' => __( 'Get basic information about the configuration of WooCommerce. This includes the currency, country, language, timezone, date format, and time format.', 'wp-feature-api-demo' ),
 				'type'        => WP_Feature::TYPE_RESOURCE,
 				'categories'  => array( 'demo', 'woocommerce', 'information' ),
-				'callback'    => 'wp_feature_api_demo_woocommerce_info_callback',
+				'callback'    => function() {
+					return array(
+						'name' => 'WooCommerce',
+						'version' => WC()->version,
+						'currency' => get_woocommerce_currency(),
+					);
+				},
 				'is_eligible' => function () {
 					return function_exists( 'WC' );
 				},
@@ -53,18 +59,6 @@ class RegisterFeatures {
 			'time_format' => get_option( 'time_format' ),
 			'active_plugins' => get_option( 'active_plugins' ),
 			'active_theme' => get_option( 'stylesheet' ),
-		);
-	}
-
-	private function woocommerce_info_callback( $input ) {
-		return array(
-			'name' => 'WooCommerce',
-			'version' => WC()->version,
-			'currency' => get_woocommerce_currency(),
-			'country' => get_woocommerce_country(),
-			'language' => get_woocommerce_language(),
-			'timezone' => wp_timezone_string(),
-			'date_format' => get_option( 'date_format' ),
 		);
 	}
 }
