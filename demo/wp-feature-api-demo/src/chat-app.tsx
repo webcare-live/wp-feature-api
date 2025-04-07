@@ -9,23 +9,25 @@ import apiFetch from '@wordpress/api-fetch';
 /**
  * Internal dependencies
  */
+import type { Message } from './context/conversation-provider';
+
+/**
+ * Internal dependencies
+ */
 import {
 	UserMessage,
 	AssistantMessage,
+	ToolCall,
 	PendingAssistantMessage,
+	FeatureTool,
 } from './components/chat-message';
 import {
 	ConversationProvider,
 	useConversation,
 } from './context/conversation-provider';
 
-interface Message {
-	text: string;
-	role: 'user' | 'assistant';
-}
-
 const ChatAppContent = () => {
-	const { messages, addMessage } = useConversation();
+	const { messages, addMessage, clearMessages } = useConversation();
 	const [ inputValue, setInputValue ] = useState( '' );
 	const [ isLoading, setIsLoading ] = useState( false );
 
@@ -34,17 +36,11 @@ const ChatAppContent = () => {
 			return;
 		}
 
-		const newMessage: Message = {
-			text: inputValue,
-			role: 'user',
-		};
-
-		addMessage( newMessage );
 		setInputValue( '' );
 		setIsLoading( true );
 
 		try {
-			const response = await apiFetch< { response: string } >( {
+			const response = await apiFetch< { messages: Message[] } >( {
 				path: '/wp/v2/demo-chat',
 				method: 'POST',
 				data: {
@@ -52,7 +48,11 @@ const ChatAppContent = () => {
 				},
 			} );
 
-			addMessage( { text: response.response, role: 'assistant' } );
+			if ( response.messages ) {
+				for ( const message of response.messages ) {
+					addMessage( message );
+				}
+			}
 		} catch ( error ) {
 			// Handle error appropriately
 			console.error( 'Failed to get response:', error );
@@ -65,19 +65,41 @@ const ChatAppContent = () => {
 		<div className="chat-container">
 			<div className="chat-header">
 				<h2>Demo AI Assistant</h2>
+				<Button
+					className="chat-header-clear"
+					variant="tertiary"
+					onClick={ clearMessages }
+				>
+					Clear
+				</Button>
 			</div>
 			<div className="chat-body">
 				<div className="chat-messages">
-					{ messages.map( ( message, index ) =>
-						message.role === 'user' ? (
-							<UserMessage key={ index } text={ message.text } />
-						) : (
-							<AssistantMessage
-								key={ index }
-								text={ message.text }
-							/>
-						)
-					) }
+					{ messages.map( ( message, index ) => {
+						switch ( message.role ) {
+							case 'user':
+								return (
+									<UserMessage
+										key={ index }
+										text={ message.content }
+									/>
+								);
+							case 'tool':
+								return (
+									<FeatureTool
+										key={ index }
+										message={ message }
+									/>
+								);
+							default:
+								return (
+									<AssistantMessage
+										key={ index }
+										message={ message }
+									/>
+								);
+						}
+					} ) }
 					{ isLoading && <PendingAssistantMessage /> }
 				</div>
 				<div className="chat-input">

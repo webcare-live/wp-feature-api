@@ -49,7 +49,7 @@ class ChatController extends WP_REST_Controller {
 		$agent->user_message( $message )->run();
 
 		return rest_ensure_response([
-			'response' => $agent->get_messages(),
+			'messages' => $agent->get_messages(),
 		]);
 	}
 }

@@ -19,6 +19,9 @@
 }
 
 .chat-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 	background: var(--wp-admin-theme-color);
 	padding: 16px;
 	border-radius: 12px 12px 0 0;
@@ -28,6 +31,10 @@
 		margin: 0;
 		font-size: 16px;
 		font-weight: 600;
+	}
+
+	button.chat-header-clear {
+		color: #fff;
 	}
 }
 
@@ -81,10 +88,18 @@
 		margin-left: auto;
 	}
 
-	&-assistant {
+	&-assistant,
+	&-tool {
 		background: #f0f0f0;
 		color: #1e1e1e;
 		margin-right: auto;
+	}
+
+	&-tool {
+		pre {
+			white-space: pre-wrap;
+			word-wrap: break-word;
+		}
 	}
 }
 

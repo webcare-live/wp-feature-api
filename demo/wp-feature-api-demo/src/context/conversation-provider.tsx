@@ -8,10 +8,19 @@ import {
 	useState,
 } from '@wordpress/element';
 
-interface Message {
-	text: string;
-	role: 'user' | 'assistant';
-}
+export type Message = {
+	content: string;
+	role: 'user' | 'assistant' | 'tool';
+	tool_calls: any[];
+	feature?: WP_Feature;
+};
+
+type WP_Feature = {
+	id: string;
+	name: string;
+	description: string;
+	type: 'resource' | 'tool';
+};
 
 interface ConversationContextType {
 	messages: Message[];
