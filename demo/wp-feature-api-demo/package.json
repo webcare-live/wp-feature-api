@@ -1,7 +1,7 @@
 {
-	"name": "wp-feature-api",
-	"version": "1.0.0",
-	"description": "A system for exposing WordPress functionality in a standardized, discoverable way for both server and client-side use",
+	"name": "wp-feature-api-demo",
+	"version": "0.1.0",
+	"description": "Demo plugin showcasing the WordPress Features API.",
 	"main": "src/index.js",
 	"scripts": {
 		"build": "wp-scripts build",
@@ -10,45 +10,44 @@
 		"lint:js": "wp-scripts lint-js",
 		"packages-update": "wp-scripts packages-update",
 		"plugin-zip": "wp-scripts plugin-zip",
-		"start": "wp-scripts start",
-		"env": "wp-env",
-		"test:unit:php:setup": "wp-env start",
-		"test:unit:php:setup:debug": "wp-env start --xdebug",
-		"test:unit:php:base": "wp-env run --env-cwd='wp-content/plugins/wp-feature-api' tests-wordpress vendor/bin/phpunit -c phpunit.xml.dist --verbose",
-		"test:unit:php": "npm-run-all test:unit:php:setup test:unit:php:base",
-		"test:unit:php:debug": "npm-run-all test:unit:php:setup:debug test:unit:php:base",
-		"serve": "wp-env start --xdebug",
-		"wp-env": "wp-env"
+		"start": "wp-scripts start"
 	},
 	"keywords": [
 		"wordpress",
 		"api",
 		"features",
 		"llm",
-		"ai"
+		"ai",
+		"demo"
 	],
 	"author": "Automattic",
 	"license": "GPL-2.0-or-later",
 	"dependencies": {
+		"@types/react": "^18.3.20",
+		"@types/react-dom": "^18.3.5",
 		"@wordpress/api-fetch": "^6.55.0",
 		"@wordpress/components": "^25.16.0",
 		"@wordpress/core-data": "^7.20.0",
 		"@wordpress/data": "^9.28.0",
 		"@wordpress/element": "^5.35.0",
-		"@wordpress/i18n": "^4.58.0"
+		"@wordpress/i18n": "^4.58.0",
+		"@wordpress/icons": "^10.20.0",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1"
 	},
-	"prettier": "@wordpress/prettier-config",
 	"devDependencies": {
+		"@wordpress/env": "^10.20.0",
 		"@wordpress/eslint-plugin": "^22.6.0",
 		"@wordpress/prettier-config": "^4.20.0",
-		"eslint": "^8.57.1",
 		"@wordpress/scripts": "^30.13.0",
-		"npm-run-all": "4.1.5",
-		"@wordpress/env": "^10.20.0",
+		"autoprefixer": "^10.4.21",
+		"eslint": "^8.57.1",
 		"eslint-import-resolver-node": "0.3.4",
 		"eslint-plugin-eslint-comments": "3.1.2",
 		"eslint-plugin-react-compiler": "^19.0.0-beta-aeaed83-20250323",
 		"eslint-plugin-storybook": "^0.11.6",
-		"prettier": "npm:wp-prettier@3.0.3"
+		"postcss": "^8.5.3",
+		"react-markdown": "^10.1.0",
+		"tailwindcss": "^4.0.17"
 	}
 }

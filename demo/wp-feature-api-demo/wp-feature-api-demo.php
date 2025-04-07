@@ -19,42 +19,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * Initialize the WordPress Feature API Demo plugin.
- *
- * @since 0.1.0
- * @return void
- */
-function wp_feature_api_demo_init() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/demo-features.php';
+define( 'WP_FEATURE_API_DEMO_PATH', plugin_dir_path( __FILE__ ) );
+define( 'WP_FEATURE_API_DEMO_URL', plugin_dir_url( __FILE__ ) );
 
-	if ( ! function_exists( 'wp_register_feature' ) ) {
-		add_action( 'admin_notices', 'wp_feature_api_demo_missing_notice' );
-		return;
-	}
-}
+require_once WP_FEATURE_API_DEMO_PATH . 'vendor/autoload.php';
 
-add_action( 'plugins_loaded', 'wp_feature_api_demo_init', 20 );
+use A8C\WpFeatureApiDemo\Main;
 
-
-/**
- * Display an admin notice if the WordPress Feature API plugin is not active.
- *
- * @since 0.1.0
- * @return void
- */
-function wp_feature_api_demo_missing_notice() {
-	?>
-	<div class="notice notice-error">
-		<p>
-			<?php
-			printf(
-				/* translators: %s: URL of the WordPress Feature API plugin */
-				esc_html__( 'The WordPress Feature API Demo plugin requires the WordPress Feature API plugin to be installed and activated. Please install it from %s.', 'wp-feature-api-demo' ),
-				'<a href="https://github.com/WordPress/wp-feature-api">GitHub</a>'
-			);
-			?>
-		</p>
-	</div>
-	<?php
-}
+$main = new Main();
+add_action( 'plugins_loaded', array( $main, 'init' ), 20 );

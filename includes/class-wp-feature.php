@@ -4,7 +4,6 @@
  *
  * @package WordPress\Features_API
  */
-
 /**
  * Class WP_Feature
  *
@@ -428,14 +427,13 @@ class WP_Feature implements \JsonSerializable {
 	}
 
 	/**
-	 * Runs the feature.
+	 * Calls the feature.
 	 *
 	 * @since 0.1.0
-	 * @param object $rest_request The context to run the feature with.
+	 * @param array $context The context to run the feature with.
 	 * @return mixed The result of running the feature.
 	 */
-	public function run( $rest_request ) {
-		$context = $rest_request->get_param( 'context' );
+	public function call( $context ) {
 		/**
 		 * Filters the context before running a feature.
 		 *
@@ -478,9 +476,16 @@ class WP_Feature implements \JsonSerializable {
 		 */
 		do_action( 'wp_feature_before_run', $context, $this );
 		do_action( $this->get_filter_id() . '_before_run', $context, $this );
-		// Run the feature callback.
 
-		$result = call_user_func( $this->callback, $rest_request );
+		$result = $context;
+		if ( $this->is_rest_alias() ) {
+			$request = new WP_REST_Request( $this->get_rest_method(), $this->get_rest_alias_route( $result ) );
+			$request->set_body_params( $result );
+			$response = rest_get_server()->dispatch( $request );
+			$result = $response->get_data();
+		} elseif ( is_callable( $this->callback ) ) {
+			$result = call_user_func( $this->callback, $context );
+		}
 
 		/**
 		 * Filters the result after running a feature.
@@ -689,7 +694,7 @@ class WP_Feature implements \JsonSerializable {
 	 * @since 0.1.0
 	 * @return array The feature as a JSON serializable array.
 	 */
-	public function jsonSerialize(): array {
+	public function jsonSerialize(): mixed {
 		return $this->to_array();
 	}
 
@@ -736,7 +741,13 @@ class WP_Feature implements \JsonSerializable {
 		}
 
 		if ( isset( $rest_alias['args'] ) ) {
-			$this->input_schema = $rest_alias['args'];
+			$properties = ! isset( $this->input_schema['properties'] ) ? array() : $this->input_schema['properties'];
+			if ( ! empty( $rest_alias['args'] ) ) {
+				$this->input_schema = array(
+					'type' => 'object',
+					'properties' => array_merge( $rest_alias['args'], $properties ),
+				);
+			}
 		}
 
 		if ( isset( $rest_alias['schema'] ) ) {
@@ -796,6 +807,33 @@ class WP_Feature implements \JsonSerializable {
 			),
 			array( 'status' => 405 )
 		);
+	}
+
+	/**
+	 * Gets the REST alias route by using available context
+	 * to hydrate the route.
+	 *
+	 * @since 0.1.0
+	 * @param array $data The data to use for hydrating the route.
+	 * @return string The hydrated REST alias route.
+	 */
+	private function get_rest_alias_route( $data ) {
+		$route = $this->rest_alias;
+
+		// Find all named capture groups in the route pattern.
+		if ( preg_match_all( '/\(\?P<([^>]+)>[^)]+\)/', $route, $matches ) ) {
+			$param_names = $matches[1];
+
+			// Replace each parameter with its value from data if available.
+			foreach ( $param_names as $param_name ) {
+				if ( isset( $data[ $param_name ] ) ) {
+					$pattern = '/\(\?P<' . $param_name . '>[^)]+\)/';
+					$route = preg_replace( $pattern, $data[ $param_name ], $route );
+				}
+			}
+		}
+
+		return $route;
 	}
 
 	/**

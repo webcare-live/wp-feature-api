@@ -4,9 +4,9 @@ This demo plugin showcases how to use the WordPress Feature API to register and 
 
 ## Requirements
 
-- WordPress 6.0 or higher
-- PHP 7.2 or higher
-- [WordPress Feature API](https://github.com/WordPress/wp-feature-api) plugin installed and activated
+-   WordPress 6.0 or higher
+-   PHP 7.2 or higher
+-   [WordPress Feature API](https://github.com/WordPress/wp-feature-api) plugin installed and activated
 
 ## Installation
 
@@ -20,26 +20,26 @@ This plugin registers three example features:
 
 ### 1. Site Information (Resource)
 
-- ID: `demo/site-info`
-- Type: Resource
-- Description: Get basic information about the WordPress site.
-- Permission: `read`
+-   ID: `demo/site-info`
+-   Type: Resource
+-   Description: Get basic information about the WordPress site.
+-   Permission: `read`
 
 ### 2. Create Post (Tool)
 
-- ID: `demo/create-post`
-- Type: Tool
-- Description: Create a new post in WordPress.
-- Permission: `publish_posts`
-- Input Schema: Requires `title` and `content`, with optional `status`.
-- Output Schema: Returns created post `id`, `url`, and `status`.
+-   ID: `demo/create-post`
+-   Type: Tool
+-   Description: Create a new post in WordPress.
+-   Permission: `publish_posts`
+-   Input Schema: Requires `title` and `content`, with optional `status`.
+-   Output Schema: Returns created post `id`, `url`, and `status`.
 
 ### 3. Current User Information (Resource)
 
-- ID: `demo/current-user`
-- Type: Resource
-- Description: Get information about the current user.
-- Permission: `read`
+-   ID: `demo/current-user`
+-   Type: Resource
+-   Description: Get information about the current user.
+-   Permission: `read`
 
 ## Usage Examples
 
@@ -48,11 +48,13 @@ This plugin registers three example features:
 You can interact with these features through the WordPress REST API:
 
 1. Get Site Information:
+
 ```
 GET /wp-json/wp/v2/features/demo/site-info
 ```
 
 2. Create a Post:
+
 ```
 POST /wp-json/wp/v2/features/demo/create-post
 {
@@ -63,6 +65,7 @@ POST /wp-json/wp/v2/features/demo/create-post
 ```
 
 3. Get Current User Information:
+
 ```
 GET /wp-json/wp/v2/features/demo/current-user
 ```
@@ -71,7 +74,7 @@ GET /wp-json/wp/v2/features/demo/current-user
 
 ```php
 // Get site information
-$site_info = wp_find_feature( 'demo/site-info' )->run();
+$site_info = wp_find_feature( 'demo/site-info' )->call();
 
 // Create a post
 $post_data = array(
@@ -79,10 +82,10 @@ $post_data = array(
     'content' => 'This is the content of my new post.',
     'status'  => 'draft',
 );
-$result = wp_find_feature( 'demo/create-post' )->run( $post_data );
+$result = wp_find_feature( 'demo/create-post' )->call( $post_data );
 
 // Get current user information
-$user_info = wp_find_feature( 'demo/current-user' )->run();
+$user_info = wp_find_feature( 'demo/current-user' )->call();
 ```
 
 ## Custom Features
@@ -91,4 +94,4 @@ You can use this demo plugin as a template to create your own features. Simply a
 
 ## License
 
-GPLv2 or later 
+GPLv2 or later

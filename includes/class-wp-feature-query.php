@@ -181,11 +181,6 @@ class WP_Feature_Query {
 			return $this->search( $feature, $this->args['search'] );
 		}
 
-		// Apply custom is_eligible if set.
-		if ( ! $feature->is_eligible() ) {
-			return false;
-		}
-
 		return true;
 	}
 
