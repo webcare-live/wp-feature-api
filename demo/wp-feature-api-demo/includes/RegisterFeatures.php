@@ -16,6 +16,7 @@ class RegisterFeatures {
 	 * @return void
 	 */
 	public function register_features() {
+		/** Global Features */
 		wp_register_feature(
 			array(
 				'id'          => 'demo/site-info',
@@ -35,7 +36,6 @@ class RegisterFeatures {
 				'categories'  => array( 'demo', 'woocommerce', 'information' ),
 				'callback'    => function() {
 					return array(
-						'name' => 'WooCommerce',
 						'version' => WC()->version,
 						'currency' => get_woocommerce_currency(),
 					);
@@ -43,6 +43,16 @@ class RegisterFeatures {
 				'is_eligible' => function () {
 					return function_exists( 'WC' );
 				},
+			)
+		);
+
+		/**
+		 * SEO Page Features
+		 */
+		wp_register_feature(
+			array(
+				'id'          => 'demo/post-info',
+				'name'        => __( 'Post Information', 'wp-feature-api-demo' ),
 			)
 		);
 	}

@@ -2,61 +2,27 @@
 
 This demo plugin showcases how to use the WordPress Feature API to register and use features in your WordPress plugins or themes.
 
-## Requirements
-
--   WordPress 6.0 or higher
--   PHP 7.2 or higher
--   [WordPress Feature API](https://github.com/WordPress/wp-feature-api) plugin installed and activated
-
 ## Installation
 
-1. Make sure you have the WordPress Feature API plugin installed and activated.
-2. Upload the `wp-feature-api-demo` folder to the `/wp-content/plugins/` directory.
-3. Activate the "WordPress Feature API Demo" plugin through the 'Plugins' menu in WordPress.
-
-## Included Demo Features
-
-This plugin registers three example features:
-
-### 1. Site Information (Resource)
-
--   ID: `demo/site-info`
--   Type: Resource
--   Description: Get basic information about the WordPress site.
--   Permission: `read`
-
-### 2. Create Post (Tool)
-
--   ID: `demo/create-post`
--   Type: Tool
--   Description: Create a new post in WordPress.
--   Permission: `publish_posts`
--   Input Schema: Requires `title` and `content`, with optional `status`.
--   Output Schema: Returns created post `id`, `url`, and `status`.
-
-### 3. Current User Information (Resource)
-
--   ID: `demo/current-user`
--   Type: Resource
--   Description: Get information about the current user.
--   Permission: `read`
+1. In this directory, run `composer install && npm install && npm run build` to install dependencies and build the plugin.
+2. Start a WordPress instance, you may use `npm run serve` to start through wp-env
+3. Make sure you have the WordPress Feature API plugin installed and activated.
+    1. `WP_FEATURE_API_LOAD_DEMO` must be true, you'll see a notice in the admin dashboard.
 
 ## Usage Examples
 
 ### Using the REST API
 
-You can interact with these features through the WordPress REST API:
-
-1. Get Site Information:
+You can view the available features directly through the WordPress REST API:
 
 ```
-GET /wp-json/wp/v2/features/demo/site-info
+GET: /wp-json/wp/v2/features
 ```
 
-2. Create a Post:
+And can call a feature like this:
 
 ```
-POST /wp-json/wp/v2/features/demo/create-post
+POST: /wp-json/wp/v2/features/[feature-id]
 {
   "title": "My New Post",
   "content": "This is the content of my new post.",
@@ -64,17 +30,15 @@ POST /wp-json/wp/v2/features/demo/create-post
 }
 ```
 
-3. Get Current User Information:
+### Using Features Directly
 
-```
-GET /wp-json/wp/v2/features/demo/current-user
-```
-
-### Using PHP in Your Code
+Some REST funnctionality is already built in, so you can use those features directly.
 
 ```php
-// Get site information
-$site_info = wp_find_feature( 'demo/site-info' )->call();
+// Get a post
+$site_info = wp_find_feature( 'resource-post' )->call([
+	'id' => 1,
+]);
 
 // Create a post
 $post_data = array(
@@ -82,16 +46,19 @@ $post_data = array(
     'content' => 'This is the content of my new post.',
     'status'  => 'draft',
 );
-$result = wp_find_feature( 'demo/create-post' )->call( $post_data );
+$result = wp_find_feature( 'tool-posts' )->call( $post_data );
 
 // Get current user information
-$user_info = wp_find_feature( 'demo/current-user' )->call();
+$user_info = wp_find_feature("resource-users/me")->call();
 ```
 
 ## Custom Features
 
-You can use this demo plugin as a template to create your own features. Simply add your feature registration and callback functions to the `demo-features.php` file or create new files to organize your features.
+You can use this demo plugin as a template to create your own features. Simply add your feature registration and callback functions to the `RegisterFeatures.php` file or create new files to organize your features.
 
-## License
+## Included Demo Features
 
-GPLv2 or later
+This plugin registers some example features under `RegisterFeatures`. Some are plugin dependent, like for WooCommerce, so make sure you've installed and plugin dependencies if you want to use those features.
+
+-   `resource-demo/woocommerce-info`: Get basic information about the WooCommerce configuration.
+-   `resource-demo/site-info`: Get basic global site information.

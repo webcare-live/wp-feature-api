@@ -103,6 +103,16 @@ function wp_feature_api_register_core_features() {
 			'rest_alias'  => '/wp/v2/users/(?P<id>[\d]+)',
 			'categories'  => array( 'core', 'user', 'rest' ),
 			'type'        => 'resource',
+			'input_schema' => array(
+				'type' => 'object',
+				'properties' => array(
+					'id' => array(
+						'type' => 'integer',
+						'description' => __( 'The ID of the user to view.', 'wp-feature-api' ),
+						'required' => true,
+					),
+				),
+			),
 		),
 		array(
 			'id'          => 'users/me',

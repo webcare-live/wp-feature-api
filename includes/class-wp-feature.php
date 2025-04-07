@@ -433,7 +433,7 @@ class WP_Feature implements \JsonSerializable {
 	 * @param array $context The context to run the feature with.
 	 * @return mixed The result of running the feature.
 	 */
-	public function call( $context ) {
+	public function call( $context = array() ) {
 		/**
 		 * Filters the context before running a feature.
 		 *
