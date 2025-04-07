@@ -1,4 +1,4 @@
 /**
  * Internal dependencies
  */
-import './client/index';
+import './store';
