@@ -47,7 +47,7 @@ Filtering can be done by:
 ### Installation
 
 1. Clone the repository.
-2. Run `npm install` to install all dependencies for the root project and all packages/workspaces.
+2. Run `npm run setup` to install all dependencies (both PHP and JavaScript).
 
 ### Building
 
