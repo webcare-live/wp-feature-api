@@ -26,7 +26,7 @@ It relies heavily on the [MCP Specification](https://spec.modelcontextprotocol.i
 
 Features may surface in an actual WP MCP server consumed by an external MCP client. The main difference is that the features are compatible across the server and client, allowing for WordPress to execute features itself on both the backend and frontend.
 
-Note, this does not implement the MCP server and transport layer. However, the feature registry may be used by an MCP server in WordPress whenever available.
+Note, this does not implement the MCP server and transport layer. However, the feature registry may be used by an MCP server like Automattics' [wordpress-mcp](https://github.com/Automattic/wordpress-mcp) plugin.
 
 Features are not limited to LLM consumption and can be used throughout WordPress directly as a primitive API for generic functionality. Hence the more generic name of "Feature API" instead of "MCP API".
 
