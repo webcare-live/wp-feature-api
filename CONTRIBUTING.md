@@ -90,21 +90,16 @@ Releasing a new version involves several steps:
 7. **Merge the Pull Request:**
     Once the pull request is approved, merge it into the `trunk` branch.
 
-8. **Create a Git Tag (on `trunk`):**
-    After the version bump PR is merged into `trunk`:
-    1. Switch to your local `trunk` branch.
-    2. Pull the latest changes (including the merge).
-    3. Tag the merge commit on `trunk` with the new version number. The tag **must** match the pattern `vX.Y.Z` (e.g., `v1.2.3`) to trigger the release workflow.
-
-    ```bash
-    git checkout trunk
-    git pull origin trunk
-    # Ensure your local trunk is at the commit where the release PR was merged
-    git tag vX.Y.Z
-    git push origin vX.Y.Z
-    ```
-
- You can also create a tag via the GitHub UI.
+8. **Create and Publish GitHub Release:**
+    Once the version bump Pull Request is merged into `trunk`:
+    1. Go to the "Releases" page in the GitHub UI.
+    2. Click the "Draft a new release" button.
+    3. In the "Choose a tag" dropdown, type your new version tag (e.g., `v1.2.3`). GitHub will offer to "Create new tag: vX.Y.Z on publish". Select this.
+    4. Ensure the "Target" is the `trunk` branch.
+    5. Enter a "Release title" (e.g., `Version 1.2.3` or `v1.2.3`).
+    6. Write a description for the release. You can list the major changes, or use GitHub's auto-generated release notes feature if available/configured.
+    7. Click "Publish release".
+    This action will create the new tag from `trunk` and trigger the GitHub Actions workflow defined in [`.github/workflows/release.yml`](.github/workflows/release.yml:1).
 
 9. **Verify Release:**
     After the GitHub Actions workflow completes, check the "Releases" page on GitHub to ensure everything completed successfully.

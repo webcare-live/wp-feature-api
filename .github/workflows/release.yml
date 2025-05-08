@@ -1,14 +1,13 @@
-# Triggers on version tags like v1.0.0, v1.2.3, etc.
-name: Create Release and Upload Artifact
+# Triggers when a release is published in the GitHub UI
+name: Build and Upload Release Asset
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  release:
+    types: [published] # Trigger when a release is published
 
 jobs:
-  build-and-release:
-    name: Build and Release
+  build-and-upload:
+    name: Build and Upload Asset
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -16,6 +15,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Checkout the specific tag associated with the release
+          ref: ${{ github.event.release.tag_name }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -32,25 +34,12 @@ jobs:
       - name: Create plugin zip
         run: npm run plugin-zip
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          body: |
-            Automated release for ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ github.event.release.upload_url }} # Get upload URL from the release event
           asset_path: ./wp-feature-api.zip
-          asset_name: wp-feature-api.zip
+          asset_name: wp-feature-api.zip # You can customize this if needed, e.g. include version
           asset_content_type: application/zip
